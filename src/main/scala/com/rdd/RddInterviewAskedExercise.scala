@@ -29,10 +29,21 @@ object RddInterviewAskedExercise {
 
     // Converting the second element of the RDD to Uppercase
     val conv = newRDD.map(x => (x._2.toUpperCase()))
-    println("Changing the name to Uppercase")
+    println("Changing the name to Uppercase:\n")
     conv.take(10).foreach(println)
 
-    // Creating
+    // Creating DataFrame from the data using createDataFrame
+    val dfFromData = spark.createDataFrame(data).toDF("Id","Name")
+    dfFromData.printSchema()
+    dfFromData.show()
+
+    import spark.implicits._
+    // Creating DataFrame from the data using createDataFrame
+    val dfFromData1 = data.toDF("Id","Name")
+    dfFromData1.printSchema()
+    dfFromData1.show()
+
+
 
   }
 }
