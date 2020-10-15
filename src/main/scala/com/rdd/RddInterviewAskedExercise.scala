@@ -42,8 +42,7 @@ object RddInterviewAskedExercise {
     val dfFromData1 = data.toDF("Id","Name")
     dfFromData1.printSchema()
     dfFromData1.show()
-
-
+    
 
   }
 }
