@@ -37,12 +37,11 @@ object RddInterviewAskedExercise {
     dfFromData.printSchema()
     dfFromData.show()
 
-    import spark.implicits._
     // Creating DataFrame from the data using createDataFrame
+    import spark.implicits._
     val dfFromData1 = data.toDF("Id","Name")
     dfFromData1.printSchema()
     dfFromData1.show()
-    
 
   }
 }
