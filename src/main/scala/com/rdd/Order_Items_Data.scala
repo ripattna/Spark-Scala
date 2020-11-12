@@ -7,7 +7,6 @@ object Order_Items_Data {
 
     //Create SparkConf Object
     val conf = new SparkConf().setMaster("local").setAppName("Test")
-    //SparkConf to initialize the Spark
     val sc = new SparkContext(conf)
 
     import org.apache.log4j._
