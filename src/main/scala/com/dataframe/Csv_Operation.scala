@@ -5,10 +5,7 @@ import org.apache.spark.sql.SparkSession
 object Csv_Operation {
   def main(args: Array[String]): Unit = {
 
-    val spark = SparkSession.builder()
-      .appName("Spark Hive Example")
-      .master("local[1]")
-      .getOrCreate()
+    val spark = SparkSession.builder().appName("Spark Hive Example").master("local[1]").getOrCreate()
 
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")

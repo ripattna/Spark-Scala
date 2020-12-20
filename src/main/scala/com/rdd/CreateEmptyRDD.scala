@@ -5,17 +5,14 @@ import org.apache.spark.sql.SparkSession
 
 object CreateEmptyRDD extends App {
 
-  val spark: SparkSession = SparkSession.builder()
-    .master("local[3]")
-    .appName("CreateEmptyRDD")
-    .getOrCreate()
+  val spark: SparkSession = SparkSession.builder().master("local[3]").appName("CreateEmptyRDD").getOrCreate()
 
   spark.sparkContext.setLogLevel("ERROR")
 
   // Creating Empty RDD without partition
   val rdd = spark.sparkContext.emptyRDD // creates EmptyRDD[0]
   println(rdd)
-  println("Num of Partitions: " + rdd.getNumPartitions) // returns o partition
+  println("Num of Partitions: " + rdd.getNumPartitions) // Returns o partition
 
   val rddString = spark.sparkContext.emptyRDD[String] // creates EmptyRDD[1]
   println(rddString)
