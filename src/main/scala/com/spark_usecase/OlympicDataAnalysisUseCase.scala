@@ -37,7 +37,7 @@ object OlympicDataAnalysisUseCase {
     )
     println(fil.count())
     val pairs: RDD[(String,Int)] = fil.map(x => (x(2),x(9).toInt))
-    val cnt = pairs.reduceByKey(_+_).collect()
+    val cnt = pairs.reduceByKey(_+_)
     cnt.take(20).foreach(println)
 
   }
