@@ -13,6 +13,7 @@ object CreateDataFrame {
 
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
+    spark.sparkContext.setLogLevel("ERROR")
 
     import spark.implicits._
     //val columns = Seq("language","users_count")

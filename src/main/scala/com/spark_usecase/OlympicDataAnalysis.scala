@@ -14,8 +14,12 @@ object  OlympicDataAnalysis {
     spark.sparkContext.setLogLevel("WARN")
 
     // Reading the csv file
-    val df = spark.read.option("delimiter",",").option("inferSchema", "true").option("timestampFormat", "yyyy/MM/dd HH:mm:ss")
+    val df = spark.read
+      .option("delimiter",",")
+      .option("inferSchema", "true")
+      .option("timestampFormat", "yyyy/MM/dd HH:mm:ss")
       .schema("Name string ,Age integer ,Country string ,Year string ,Closing_Date string ,Sport string ,Gold_Medals integer ,Silver_Medals integer ,Bronze_Medals integer ,Total_Medals integer")
+
       .csv("C:\\Project\\Files\\Input\\csv\\olympics_data.csv")
 
     df.createGlobalTempView("olympic")

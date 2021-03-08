@@ -33,9 +33,7 @@ object JoinExample {
     empDF.show(false)
 
     val dept = Seq(("Finance",10), ("Marketing",20), ("Sales",30), ("IT",40))
-
     val deptColumns = Seq("dept_name","dept_id")
-
     val deptDF = dept.toDF(deptColumns:_*)
     deptDF.show(false)
 

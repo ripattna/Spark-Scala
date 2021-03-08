@@ -1,5 +1,6 @@
 package com.rdd
 
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
 object ChargeTest {
@@ -8,20 +9,18 @@ object ChargeTest {
 
     // Create Conf Object and to initializing the SparkContext
     val conf = new SparkConf().setMaster("local").setAppName("ChargeTest")
-    val sc = new SparkContext(conf)
+    // val sc = new SparkContext(conf)
+    val sc = SparkContext.getOrCreate(conf)
 
-    // Creating log level
-    import org.apache.log4j._
-    Logger.getLogger("log").setLevel(Level.ERROR)
-    sc.setLogLevel("ERROR")
-
+    // Reading the text file
     val customerDetails = sc.textFile("C:\\Project\\Files\\Input\\Telkomsel_Feed")
-    val myRDD = customerDetails.map(x => x.replace("|", "#"))
-
-    // myRDD.collect().foreach(println)
     customerDetails.take(5).foreach(println)
+
+    // Replacing the delimiter
+    val myRDD = customerDetails.map(x => x.replace("|", "#"))
     println("Below the modified value:")
-    myRDD.collect.foreach(println)
+    myRDD.collect().foreach(println)
     myRDD.saveAsTextFile("C:\\Project\\Files\\Output\\Telkomsel_Feed")
+
   }
 }

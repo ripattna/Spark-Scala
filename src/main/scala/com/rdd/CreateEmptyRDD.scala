@@ -5,8 +5,9 @@ import org.apache.spark.sql.SparkSession
 
 object CreateEmptyRDD extends App {
 
+  // Creating SparkSession
   val spark: SparkSession = SparkSession.builder().master("local[3]").appName("CreateEmptyRDD").getOrCreate()
-
+  // Setting log level to error
   spark.sparkContext.setLogLevel("ERROR")
 
   // Creating Empty RDD without partition
@@ -17,7 +18,6 @@ object CreateEmptyRDD extends App {
   val rddString = spark.sparkContext.emptyRDD[String] // creates EmptyRDD[1]
   println(rddString)
   println("Num of Partitions: " + rddString.getNumPartitions) // returns o partition
-
   //rddString.saveAsTextFile("test.txt")
 
   // Creating Empty RDD with partition
@@ -26,17 +26,15 @@ object CreateEmptyRDD extends App {
   println("Num of Partitions  : " + rdd2.getNumPartitions) //Outputs: initial partition count:3
 
   val rdd3 = spark.sparkContext.parallelize(dataSeq, 10)
-  //println("Number of RDD :" +rdd3.getNumPartitions)
 
   val new_rddPart = spark.sparkContext.parallelize(Seq(""))
   println(new_rddPart)
-  println("Number of RDD is:" + new_rddPart.getNumPartitions)
-
-  //rdd2.saveAsTextFile("test2.txt")
+  println("Number of Partitions is:" + new_rddPart.getNumPartitions)
 
   // Pair RDD
   type dataType = (String, Int)
   var pairRDD = spark.sparkContext.emptyRDD[dataType]
   println(pairRDD)
+  println("Number of Partitions of Pair RDD:" + pairRDD.getNumPartitions)
 
 }
