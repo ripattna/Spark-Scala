@@ -4,10 +4,7 @@ import org.apache.spark.sql.SparkSession
 
 object RDDRepartitionExample extends App {
 
-  val spark: SparkSession = SparkSession.builder()
-    .master("local[5]")
-    .appName("RDDRepartition")
-    .getOrCreate()
+  val spark: SparkSession = SparkSession.builder().master("local[5]").appName("RDDRepartition").getOrCreate()
   /*
   //Creates empty RDD with no partition
   val rdd_1 = spark.sparkContext.emptyRDD// creates EmptyRDD[0]
@@ -18,7 +15,7 @@ object RDDRepartitionExample extends App {
   val reparRdd = rdd_1.repartition(4) //Setting the partition to 4
   println("Re-partition count for rdd_1:"+reparRdd.getNumPartitions) //Outputs: "re-partition count:4
 
-  //Setting the rdd_1 partition to increase to 4 partition.
+  //Setting the rdd_1 partition to increase to 2 partition.
   val reparRdd_1 = rdd_1.repartition(2) //Setting the partition to 2
   println("Re-partition count for rdd_1:"+reparRdd_1.getNumPartitions) //Outputs: "re-partition count:2
 

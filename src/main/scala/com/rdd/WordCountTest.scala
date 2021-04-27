@@ -11,9 +11,6 @@ object WordCountTest {
     val sc = new SparkContext(conf)
 
     // Creating log level
-    import org.apache.log4j.{Level, Logger}
-    Logger.getLogger("org").setLevel(Level.ERROR)
-    Logger.getLogger("akka").setLevel(Level.ERROR)
     sc.setLogLevel("ERROR")
 
     // Reading the text file

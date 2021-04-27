@@ -8,7 +8,7 @@ object SparkContext_Test {
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setAppName("a").setMaster("local")
-   // val sc = new SparkContext(conf)
+    // val sc = new SparkContext(conf)
     val sc = SparkContext.getOrCreate(conf)
 
     // Setting log level to error
