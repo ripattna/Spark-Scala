@@ -16,7 +16,6 @@ object PokemonUseCaseRDD {
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
 
-
     // Reading the dataset
     val PokemonSourceData  = spark.sparkContext.textFile("C:\\Project\\Files\\Input\\csv\\PokemonData.csv")
 

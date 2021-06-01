@@ -12,7 +12,6 @@ object CreateDataFrame {
     //val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExample").getOrCreate()
 
     // Creating log level
-    spark.sparkContext.setLogLevel("WARN")
     spark.sparkContext.setLogLevel("ERROR")
 
     import spark.implicits._
@@ -29,7 +28,7 @@ object CreateDataFrame {
     dfFromRDD1.printSchema()
     dfFromRDD1.show()
 
-    // Converting RDD to DataFrame (USING createDataFrame)
+    // Converting RDD to DataFrame (USING createDataFrame())
     val columns = Seq("language", "users_count")
     val dfFromRDD2 = spark.createDataFrame(rdd).toDF(columns: _*)
 
