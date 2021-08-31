@@ -1,0 +1,42 @@
+[{
+  "RecordNumber": 1,
+  "Zipcode": 701,
+  "ZipCodeType": "STANDARD",
+  "City": "PASEO COSTA DEL SUR",
+  "State": "PR"
+},
+{
+  "RecordNumber": 2,
+  "Zipcode": 702,
+  "ZipCodeType": "STANDARD",
+  "City": "BDA SAN LUIS",
+  "State": "PR"
+},
+{
+  "RecordNumber": 3,
+  "Zipcode": 703,
+  "ZipCodeType": "STANDARD",
+  "City": null,
+  "State": "PR"
+},
+{
+  "RecordNumber": 4,
+  "Zipcode": 704,
+  "ZipCodeType": "STANDARD",
+  "City": "PASEO COSTA DEL SUR",
+  "State": "PR"
+},
+{
+  "RecordNumber": 5,
+  "Zipcode": 705,
+  "ZipCodeType": "STANDARD",
+  "City": "Cuttack",
+  "State": "PR"
+},
+{
+  "RecordNumber": 6,
+  "Zipcode": 12,
+  "ZipCodeType": "STANDARD",
+  "City": "Delhi",
+  "State": "PR"
+}]
