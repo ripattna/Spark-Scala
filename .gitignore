@@ -1,9 +1,4 @@
 .idea
-.idea/
-.project
 project/
-.settings
-*.class
-*.orig
-*.log
 target/
+build.sbt
