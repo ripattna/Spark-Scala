@@ -3,7 +3,7 @@ package com.rdd
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
-object PokemonUseCaseRDD {
+object  PokemonUseCaseRDD {
   def main(args: Array[String]): Unit = {
 
     // Create SparkConf Object

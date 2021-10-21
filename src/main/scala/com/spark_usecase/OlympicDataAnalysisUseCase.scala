@@ -2,15 +2,10 @@ package com.spark_usecase
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
 
 object OlympicDataAnalysisUseCase {
 
   def main(args: Array[String]): Unit = {
-
-    // Create Conf Object and to initializing the SparkContext
-    // val conf = new SparkConf().setMaster("local").setAppName("OlympicData")
-    // val sc = new SparkContext(conf)
 
     // Creating SparkSession
     val spark = SparkSession.builder().appName("OlympicData").master("local").getOrCreate()

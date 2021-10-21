@@ -1,15 +1,15 @@
 package com.rdd
 
-import com.rdd.CreateEmptyRDD.spark
 import org.apache.spark.{SparkConf, SparkContext}
 
 object SparkContext_Test {
 
   def main(args: Array[String]): Unit = {
 
-    val conf = new SparkConf().setAppName("a").setMaster("local")
+    // Creating SparkConf and initializing SparkContext
+    val conf = new SparkConf().setAppName("Spark-Scala").setMaster("local")
     // val sc = new SparkContext(conf)
-    val sc = SparkContext.getOrCreate(conf)
+    val sc = SparkContext.getOrCreate()
 
     // Setting log level to error
     sc.setLogLevel("ERROR")

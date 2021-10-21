@@ -9,9 +9,6 @@ object OlympicDataAnalysisUseCaseParameter {
   def main(args: Array[String]): Unit = {
 
     if(args.length==3) {
-    //Create Conf Object and to initializing the SparkContext
-    //val conf = new SparkConf().setMaster("local").setAppName("OlympicData")
-    //val sc = new SparkContext(conf)
 
     // Creating SparkSession
     val spark = SparkSession.builder()

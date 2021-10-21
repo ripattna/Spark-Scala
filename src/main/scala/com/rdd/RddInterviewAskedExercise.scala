@@ -1,7 +1,5 @@
 package com.rdd
 
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.SparkSession
 
 object RddInterviewAskedExercise {

@@ -2,7 +2,7 @@ package com.rdd
 
 import org.apache.spark.{SparkConf, SparkContext}
 
-object RDDTransformation {
+object  RDDTransformation {
   def main(args: Array[String]): Unit = {
 
     // Create Conf Object and to initializing the SparkContext
@@ -10,12 +10,9 @@ object RDDTransformation {
     val sc = new SparkContext(conf)
 
     // Creating log level
-    import org.apache.log4j._
-    Logger.getLogger("org").setLevel(Level.ERROR)
-    Logger.getLogger("akka").setLevel(Level.ERROR)
     sc.setLogLevel("ERROR")
 
-    val readRDD = sc.textFile(path = "C:\\Project\\Files\\Input\\text\\Input.txt")
+    val readRDD = sc.textFile(path = "src/main/resources/Input.txt")
     // readRDD.collect().foreach(println)
     val linesWithSpark = readRDD.filter(line => line.contains("Spark"))
     println("The lines where Spark present in the test:")
