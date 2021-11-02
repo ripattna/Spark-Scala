@@ -6,7 +6,7 @@ object EmpUseCase {
 
   def main(args: Array[String]): Unit = {
 
-    val spark = SparkSession.builder().appName("EmpUseCase").master("local").getOrCreate()
+    val spark = SparkSession.builder().appName("EmpUseCase").master("local").enableHiveSupport().getOrCreate()
 
     // Creating log level
     //spark.sparkContext.setLogLevel("WARN")

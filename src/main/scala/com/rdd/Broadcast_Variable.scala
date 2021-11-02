@@ -2,7 +2,6 @@ package com.rdd
 
 import org.apache.spark.sql.SparkSession
 
-
 object Broadcast_Variable {
 
   def main(args: Array[String]): Unit = {
