@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 object RDDRepartitionExample extends App {
 
   // Creating SparkSession
-  val spark: SparkSession = SparkSession.builder().master("local[5]").appName("RDDRepartition").getOrCreate()
+  val spark: SparkSession = SparkSession.builder().master("local[5]").appName("RDD_Repartition").getOrCreate()
 
   val rdd1 = spark.sparkContext.parallelize(Range(0, 20), 6)
   println("parallelize : " + rdd1.partitions.size)

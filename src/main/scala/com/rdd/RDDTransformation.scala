@@ -3,6 +3,7 @@ package com.rdd
 import org.apache.spark.{SparkConf, SparkContext}
 
 object  RDDTransformation {
+
   def main(args: Array[String]): Unit = {
 
     // Create Conf Object and to initializing the SparkContext
@@ -14,6 +15,7 @@ object  RDDTransformation {
 
     val readRDD = sc.textFile(path = "src/main/resources/Input.txt")
     // readRDD.collect().foreach(println)
+
     val linesWithSpark = readRDD.filter(line => line.contains("Spark"))
     println("The lines where Spark present in the test:")
     linesWithSpark.collect().foreach(println)

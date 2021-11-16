@@ -11,13 +11,13 @@ object  PokemonUseCaseRDD {
     val sc = new SparkContext(conf)
 
     // Creating Spark Session
-    val spark = SparkSession.builder().master("local").appName("Header_Footer_Removal").getOrCreate()
+    val spark = SparkSession.builder().master("local").appName("PokemonUseCaseRDD").getOrCreate()
 
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
 
     // Reading the dataset
-    val PokemonSourceData  = spark.sparkContext.textFile("C:\\Project\\Files\\Input\\csv\\PokemonData.csv")
+    val PokemonSourceData  = spark.sparkContext.textFile("src/main/resources/PokemonData.csv")
 
     println("#Get data Using collect:")
     // PokemonSourceData.collect().foreach(f => {println(f)})

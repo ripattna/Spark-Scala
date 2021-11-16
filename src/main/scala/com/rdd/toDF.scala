@@ -26,7 +26,6 @@ object toDF {
     dfFromData.show()
 
     // Create DataFrame from the RDD
-    // Converting the dataset to RDD using parallelize()
     val rdd = spark.sparkContext.parallelize(data)
     val dfFromRDD = rdd.toDF(columns:_*)
     println("Creating DataFrame from RDD using toDF:")
