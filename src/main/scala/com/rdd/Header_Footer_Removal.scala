@@ -1,14 +1,9 @@
 package com.rdd
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
 
 object Header_Footer_Removal {
   def main(args: Array[String]): Unit = {
-
-    // Creating SparkContext and initializing Spark conf
-    // val conf = new SparkConf().setMaster("local").setAppName("Header_Footer_Removal")
-    // val sc = new SparkContext(conf)
 
     // Creating Spark Session
     val spark = SparkSession.builder().master("local").appName("Header_Footer_Removal").getOrCreate()
@@ -16,7 +11,7 @@ object Header_Footer_Removal {
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
 
-    val rddFromFile  = spark.sparkContext.textFile("C:\\Project\\Files\\Input\\text\\HeaderFooter_Removal.txt")
+    val rddFromFile  = spark.sparkContext.textFile("src/main/resources/HeaderFooter_Removal.txt")
 
     println("#Get data Using collect:")
     rddFromFile.collect().foreach(f => {println(f)})

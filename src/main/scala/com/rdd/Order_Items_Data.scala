@@ -11,15 +11,16 @@ object Order_Items_Data {
 
     import org.apache.log4j._
     Logger.getLogger("org").setLevel(Level.ERROR)
-    Logger.getLogger("Akka").setLevel(Level.ERROR)
     sc.setLogLevel("ERROR")
 
-    val orderItems = sc.textFile("E:\\Study\\data\\retail_db\\order_items")
+    val orderItems = sc.textFile("src/main/resources/order_items/part-00000")
 
     val revenuePerOrder = orderItems.
       map(oi => (oi.split(",")(1).toInt, oi.split(",")(4).toFloat)).
       reduceByKey(_ + _).map(oi => oi._1 + "," + oi._2)
+
     //revenuePerOrder.saveAsTextFile(args(2))
+
     revenuePerOrder.take(15).foreach(println)
   }
 }

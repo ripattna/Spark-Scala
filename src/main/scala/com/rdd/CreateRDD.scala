@@ -26,7 +26,7 @@ object CreateRDD {
     println("The number word in the RDD is: " + firstRDD.count())
 
     //# 2.Creating a RDD referencing a data set from a external storage system
-    val readRDD = sc.textFile(path = "C:\\Project\\Files\\Input\\text\\Input.txt")
+    val readRDD = sc.textFile(path = "src/main/resources/Input.txt")
     readRDD.collect().foreach(println)
 
     //# 3.Creating a RDD by transforming a existing RDD

@@ -13,7 +13,6 @@ object FirstSparkProgram {
     // Creating log level
     import org.apache.log4j._
     Logger.getLogger("org").setLevel(Level.ERROR)
-    Logger.getLogger("akka").setLevel(Level.ERROR)
     sc.setLogLevel("ERROR")
 
     // Creating the RDD

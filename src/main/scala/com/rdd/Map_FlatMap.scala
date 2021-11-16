@@ -13,7 +13,6 @@ object Map_FlatMap {
 
     //Creating log level
     Logger.getLogger("org").setLevel(Level.ERROR)
-    Logger.getLogger("akka").setLevel(Level.ERROR)
     sc.setLogLevel("ERROR")
 
     val x = sc.parallelize(List("spark", "rdd", "example", "sample", "kafka"))
