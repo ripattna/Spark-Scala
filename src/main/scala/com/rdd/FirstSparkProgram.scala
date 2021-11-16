@@ -19,5 +19,6 @@ object FirstSparkProgram {
     val rdd1 = sc.makeRDD(Array(1, 2, 3, 4, 5, 6))
     rdd1.collect().foreach(println)
     println("Number of element in RDD:", rdd1.count())
+
   }
 }

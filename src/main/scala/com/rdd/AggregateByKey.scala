@@ -1,6 +1,5 @@
 package com.rdd
 
-import com.dataframe.SampleDataFrame.spark
 import org.apache.spark.sql.SparkSession
 
 object AggregateByKey extends App{

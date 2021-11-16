@@ -23,4 +23,5 @@ object RDDRepartitionExample extends App {
   val rdd3 = rdd1.coalesce(4)
   println("Repartition size : " + rdd3.partitions.size)
   // rdd3.saveAsTextFile("c:/tmp/coalesce")
+
 }
