@@ -2,16 +2,12 @@ package com.rdd
 
 import org.apache.spark.sql.SparkSession
 
-object ReduceByKeyExample extends App{
+object reduceByKey_Example {
 
-  // Spark Session
   val spark: SparkSession = SparkSession.builder()
     .master("local[1]")
     .appName("Spark-Scala")
     .getOrCreate()
-
-  // Creating log level
-  spark.sparkContext.setLogLevel("WARN")
 
   val data = Seq((1, 2),
     (3, 4),

@@ -2,7 +2,7 @@ package com.dataframe
 
 import org.apache.spark.sql.SparkSession
 
-object Csv_Operation {
+object CsvOperation {
 
   def main(args: Array[String]): Unit = {
 
