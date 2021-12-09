@@ -8,7 +8,8 @@ object FirstSparkProgram {
 
     // Create Conf Object and to initializing the SparkContext
     val conf = new SparkConf().setMaster("local").setAppName("FirstSparkProgram")
-    val sc = new SparkContext(conf)
+    //  val sc = new SparkContext(conf)
+    val sc = SparkContext.getOrCreate(conf)
 
     // Creating log level
     import org.apache.log4j._

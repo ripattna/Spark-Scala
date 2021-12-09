@@ -8,8 +8,11 @@ object ChargeTest {
 
     // Create Conf Object and to initializing the SparkContext
     val conf = new SparkConf().setMaster("local").setAppName("ChargeTest")
-    // val sc = new SparkContext(conf)
     val sc = SparkContext.getOrCreate(conf)
+    // val sc = new SparkContext(conf)
+
+    // Setting the log level to Error
+     sc.setLogLevel("ERROR")
 
     // Reading the text file
     val customerDetails = sc.textFile("src/main/resources/Employee.txt")

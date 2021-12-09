@@ -7,6 +7,7 @@ object CreateEmptyRDD extends App {
 
   // Creating SparkSession
   val spark: SparkSession = SparkSession.builder().master("local[3]").appName("CreateEmptyRDD").getOrCreate()
+
   // Setting log level to error
   spark.sparkContext.setLogLevel("ERROR")
 
