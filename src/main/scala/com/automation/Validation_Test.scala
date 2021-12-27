@@ -72,6 +72,7 @@ object Validation_Test {
     println("Join result for valueD")
     val valueD = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") && df1("valueD") === df2("valueD"))
     println(valueD.count())
+    valueD.show()
 
     println("""""""""""""""""""""""""""""""""""""""""""""""""""""""")
 
@@ -90,6 +91,7 @@ object Validation_Test {
     println("Join result for valueD")
     val valueD_1 = df1.join(df2, Seq("Primary_Key","valueD")).agg(sum("valueD")).select(col("sum(valueD)").as("valueD"))
     println(valueD_1.count())
+    valueD.show()
 
   }
 
