@@ -55,45 +55,41 @@ object Validation_Test {
 
     val join_data1 = df1.join(df2, df1("Primary_Key") === df2("Primary_Key"), "inner").drop(df2("Primary_Key"))
     println("Inner join result")
-    //println(join_data1.count())
 
     // Using Join with multiple columns on where clause
     println("Join result for valueA")
-    val valueA = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") &&
-      df1("valueA") === df2("valueA"))
+    val valueA = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") && df1("valueA") === df2("valueA"))
     println(valueA.count())
 
     println("Join result for valueB")
-    val valueB = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") &&
-      df1("valueB") === df2("valueB"))
+    val valueB = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") && df1("valueB") === df2("valueB"))
     println(valueB.count())
 
     println("Join result for valueC")
-    val valueC = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") &&
-      df1("valueC") === df2("valueC"))
+    val valueC = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") && df1("valueC") === df2("valueC"))
     println(valueC.count())
 
     println("Join result for valueD")
-    val valueD = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") &&
-      df1("valueD") === df2("valueD"))
+    val valueD = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") && df1("valueD") === df2("valueD"))
     println(valueD.count())
 
-    // Left Anti Join
-    println("Left Anti join")
-    val valueA_Anti = df1.join(df2).where(df1("Primary_Key") === df2("Primary_Key") && df1("valueA") === df2("valueA"))
-    println(valueA_Anti.count())
+    println("""""""""""""""""""""""""""""""""""""""""""""""""""""""")
 
-    df1.join(df2,df1("Primary_Key") ===  df2("Primary_Key"),"left_anti").show(false)
+    println("Join result for valueA")
+    val valueA_1 = df1.join(df2, Seq("Primary_Key","valueA")).agg(sum("valueA")).select(col("sum(valueA)").as("valueA"))
+    println(valueA_1.count())
 
-    println("New Left Join Result")
-    df1.join(df2,df1("Primary_Key") === df2("Primary_Key") &&  df1("valueA") === df2("valueA"), "left_anti").show()
+    println("Join result for valueB")
+    val valueB_1 = df1.join(df2, Seq("Primary_Key","valueB")).agg(sum("valueB")).select(col("sum(valueB)").as("valueB"))
+    println(valueB_1.count())
 
-    //  println("Present in Source but not present in target")
+    println("Join result for valueC")
+    val valueC_1 = df1.join(df2, Seq("Primary_Key","valueC")).agg(sum("valueC")).select(col("sum(valueC)").as("valueC"))
+    println(valueC_1.count())
 
-    // df1.except(df2).show(false)
-
-    // println("Present in Target but not present in target")
-    // df2.except(df1).show(false)
+    println("Join result for valueD")
+    val valueD_1 = df1.join(df2, Seq("Primary_Key","valueD")).agg(sum("valueD")).select(col("sum(valueD)").as("valueD"))
+    println(valueD_1.count())
 
   }
 
