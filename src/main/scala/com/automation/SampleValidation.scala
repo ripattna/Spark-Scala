@@ -1,5 +1,6 @@
 package com.automation
 
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.{sum, _}
 import org.apache.spark.sql.functions.col
@@ -15,13 +16,17 @@ object SampleValidation {
     // Creating log level
     spark.sparkContext.setLogLevel("ERROR")
 
+    val applicationConf: Config = ConfigFactory.load("application.conf")
+    val sourceFile = applicationConf.getString("filePath.sourceFile")
+    val targetFile = applicationConf.getString("filePath.targetFile")
+
     // Read the source file
-    val sourceDF = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df1.csv")
+    val sourceDF = spark.read.option("header", "true").option("inferSchema", "true").csv(sourceFile)
     println("Printing the Source DF:")
     sourceDF.show()
 
     // Read the target file
-    val targetDF = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df2.csv")
+    val targetDF = spark.read.option("header", "true").option("inferSchema", "true").csv(targetFile)
     println("Printing the Target DF:")
     targetDF.show()
 

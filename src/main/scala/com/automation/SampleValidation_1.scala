@@ -1,6 +1,6 @@
 package com.automation
 
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.{sum, _}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{LongType, StructField, StructType}
@@ -11,120 +11,133 @@ object SampleValidation_1 {
 
     // Spark Session
     val spark = SparkSession.builder().master("local").appName("Test").getOrCreate()
+
     // Creating log level
     spark.sparkContext.setLogLevel("ERROR")
 
     // Read the source file
-    val df1 = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df1.csv")
-    println("Printing the First DF:")
-    df1.show()
+    val sourceDF = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df1.csv")
+    println("Printing the Source DF:")
+    sourceDF.show()
 
     // Read the target file
-    val df2 = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df2.csv")
-    println("Printing the Second DF:")
-    df2.show()
+    val targetDF = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df2.csv")
+    println("Printing the Target DF:")
+    targetDF.show()
 
-    println("For No of Rows in Source where value is 1:")
     // For No of Rows in Source where value is 1
-    val source_data = df1.agg(sum("valueA"), sum("valueB"), sum("valueC"),
-      sum("valueD"))
-      .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"),
-        col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
-    source_data.show()
+    println("For No of Rows in Source where value is 1:")
+    val sourceAgg = sourceDF.agg(sum("valueA"), sum("valueB"), sum("valueC"), sum("valueD"))
+      .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"), col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
+      .withColumn("Column_Name",monotonically_increasing_id())
 
-    println("For No of Rows in Target where value is 1:")
+    def TransposeSourceDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+      val columnsValue = columns.map(x => "'" + x + "', " + x)
+      val stackCols = columnsValue.mkString(",")
+      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
+      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
+      final_df
+    }
+    val sourceRowsCount = TransposeSourceDF(sourceAgg, Seq("valueA", "valueB", "valueC", "valueD"), "Column_Name").withColumnRenamed("0","No_Of_Rows_Source")
+    sourceRowsCount.show()
+
     // For No of Rows in Target where value is 1
-    val target_data = df2.agg(sum("valueA"), sum("valueB"), sum("valueC"),
-      sum("valueD"))
-      .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"),
-        col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
-    target_data.show()
+    println("For No of Rows in Target where value is 1:")
+    val targetAgg = targetDF.agg(sum("valueA"), sum("valueB"), sum("valueC"), sum("valueD"))
+      .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"), col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
+      .withColumn("Column_Name",monotonically_increasing_id())
 
-    source_data.createOrReplaceTempView("axis")
-    val b = spark.sqlContext.sql("select 'valueA' as Column_Name,valueA as No_Of_Rows_Source from axis union " +
-      "select 'valueB', valueB  from axis union " + "select 'valueC', valueC  from axis union " + "select 'valueD', valueD  from axis")
-    // b.show()
+    def TransposeTargetDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+      val columnsValue = columns.map(x => "'" + x + "', " + x)
+      val stackCols = columnsValue.mkString(",")
+      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
+      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
+      final_df
+    }
+    val targetRowsCount = TransposeTargetDF(targetAgg, Seq("valueA", "valueB", "valueC", "valueD"), "Column_Name").withColumnRenamed("0","No_Of_Rows_Target")
+    targetRowsCount.show()
 
-    target_data.createOrReplaceTempView("axis")
-    val b1 = spark.sqlContext.sql("select 'valueA' as Column_Name,valueA as No_Of_Rows_Target from axis union " +
-      "select 'valueB', valueB  from axis union " + "select 'valueC', valueC  from axis union " + "select 'valueD', valueD  from axis")
-    // b1.show()
-
-    val join_data = b.join(b1, b("Column_Name") === b1("Column_Name"), "inner").drop(b1("Column_Name")).orderBy("Column_Name")
-    //join_data.show()
+    // Source and Target Row Count
+    val sourceAndTargetCount = sourceRowsCount.join(targetRowsCount, Seq("Column_Name"),"inner")
+    sourceAndTargetCount.show()
 
     // Inner join to get the Overlap Count
-    val valueA_1 = df1.join(df2, Seq("Primary_Key","valueA")).agg(sum("valueA")).select(col("sum(valueA)").as("valueA"))
-    val valueB_1 = df1.join(df2, Seq("Primary_Key","valueB")).agg(sum("valueB")).select(col("sum(valueB)").as("valueB"))
-    val valueC_1 = df1.join(df2, Seq("Primary_Key","valueC")).agg(sum("valueC")).select(col("sum(valueC)").as("valueC"))
-    val valueD_1 = df1.join(df2, Seq("Primary_Key","valueD")).agg(sum("valueD")).select(col("sum(valueD)").as("valueD"))
+    val valueAInner = sourceDF.join(targetDF, Seq("Primary_Key","valueA"),"inner").agg(sum("valueA")).select(col("sum(valueA)").as("valueA")).withColumn("index",monotonically_increasing_id())
+    val valueBInner = sourceDF.join(targetDF, Seq("Primary_Key","valueB"),"inner").agg(sum("valueB")).select(col("sum(valueB)").as("valueB")).withColumn("index",monotonically_increasing_id())
+    val valueCInner = sourceDF.join(targetDF, Seq("Primary_Key","valueC"),"inner").agg(sum("valueC")).select(col("sum(valueC)").as("valueC")).withColumn("index",monotonically_increasing_id())
+    val valueDInner = sourceDF.join(targetDF, Seq("Primary_Key","valueD"),"inner").agg(sum("valueD")).select(col("sum(valueD)").as("valueD")).withColumn("index",monotonically_increasing_id())
 
-    val df11 = spark.sqlContext.createDataFrame(valueA_1.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueA_1.schema.fields :+ StructField("index", LongType, false)))
-    val df22 = spark.sqlContext.createDataFrame(valueB_1.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueB_1.schema.fields :+ StructField("index", LongType, false)))
-    val df33 = spark.sqlContext.createDataFrame(valueC_1.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueC_1.schema.fields :+ StructField("index", LongType, false)))
-    val df44 = spark.sqlContext.createDataFrame(valueD_1.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueD_1.schema.fields :+ StructField("index", LongType, false)))
-
-    val join1 = df11.join(df22, Seq("index"))
-    val join2 = df33.join(df44, Seq("index"))
-    val join_df = join1.join(join2,Seq("index")).drop("index")
+    val innerJoinAB = valueAInner.join(valueBInner, Seq("index"))
+    val innerJoinCD = valueCInner.join(valueDInner, Seq("index"))
+    val innerJoin = innerJoinAB.join(innerJoinCD,Seq("index")).na.fill(0).withColumn("Column_Name",monotonically_increasing_id()).drop("index")
     // println("Inner join result:")
-    //join_df.show()
+    // innerJoin.show()
 
-    join_df.createOrReplaceTempView("axis")
-    val b01 = spark.sqlContext.sql("select 'valueA' as Column_Name,valueA as Overlap_Count from axis union " +
-      "select 'valueB', valueB  from axis union " + "select 'valueC', valueC  from axis union " + "select 'valueD', valueD  from axis")
-    // println("Inner join Transpose:")
-    //b01.show()
+    def TransposeInnerDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+      val columnsValue = columns.map(x => "'" + x + "', " + x)
+      val stackCols = columnsValue.mkString(",")
+      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
+      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
+      final_df
+    }
+    val innerCount = TransposeInnerDF(innerJoin, Seq("valueA", "valueB", "valueC", "valueD"), "Column_Name").withColumnRenamed("0","Overlap_Count")
+    innerCount.show()
 
-    // Including the inner join
-    val final_df1 = join_data.join(b01,Seq("Column_Name"))
+    // Including the inner join result in summery
+    val innerJoinResult = sourceAndTargetCount.join(innerCount,Seq("Column_Name"))
+    innerJoinResult.show()
 
-    val valueA_12 = df1.join(df2, Seq("Primary_Key","valueA"), "leftanti").agg(sum("valueA")).select(col("sum(valueA)").as("valueA"))
-    val valueB_12 = df1.join(df2, Seq("Primary_Key","valueB"),"leftanti").agg(sum("valueB")).select(col("sum(valueB)").as("valueB"))
-    val valueC_12 = df1.join(df2, Seq("Primary_Key","valueC"),"leftanti").agg(sum("valueC")).select(col("sum(valueC)").as("valueC"))
-    val valueD_12 = df1.join(df2, Seq("Primary_Key","valueD"),"leftanti").agg(sum("valueD")).select(col("sum(valueD)").as("valueD"))
+    val valueALeftJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueA"),"left_anti").agg(sum("valueA")).select(col("sum(valueA)").as("valueA")).withColumn("index",monotonically_increasing_id())
+    val valueBLeftJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueB"),"left_anti").agg(sum("valueB")).select(col("sum(valueB)").as("valueB")).withColumn("index",monotonically_increasing_id())
+    val valueCInnerJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueC"),"left_anti").agg(sum("valueC")).select(col("sum(valueC)").as("valueC")).withColumn("index",monotonically_increasing_id())
+    val valueDInnerJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueD"),"left_anti").agg(sum("valueD")).select(col("sum(valueD)").as("valueD")).withColumn("index",monotonically_increasing_id())
 
-    val df011 = spark.sqlContext.createDataFrame(valueA_12.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueA_12.schema.fields :+ StructField("index", LongType, false)))
-    val df022 = spark.sqlContext.createDataFrame(valueB_12.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueB_12.schema.fields :+ StructField("index", LongType, false)))
-    val df033 = spark.sqlContext.createDataFrame(valueC_12.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueC_12.schema.fields :+ StructField("index", LongType, false)))
-    val df044 = spark.sqlContext.createDataFrame(valueD_12.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueD_12.schema.fields :+ StructField("index", LongType, false)))
+    val leftJoinAB = valueALeftJoin.join(valueBLeftJoin, Seq("index"))
+    val leftJoinCD = valueCInnerJoin.join(valueDInnerJoin, Seq("index"))
+    val leftJoin = leftJoinAB.join(leftJoinCD,Seq("index")).na.fill(0).withColumn("Column_Name",monotonically_increasing_id()).drop("index")
+    println("Present in Source not in Target:")
+    leftJoin.show()
 
-    val join01 = df011.join(df022, Seq("index"))
-    val join02 = df033.join(df044, Seq("index"))
-    val join_df0 = join01.join(join02,Seq("index")).drop("index")
-    // println("Present in Source not in Target:")
-    // join_df0.show()
+    def TransposeLeftAntiDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+      val columnsValue = columns.map(x => "'" + x + "', " + x)
+      val stackCols = columnsValue.mkString(",")
+      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
+      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
+      final_df
+    }
 
-    join_df0.createOrReplaceTempView("axis")
-    val sb01 = spark.sqlContext.sql("select 'valueA' as Column_Name,valueA as Extra_Records_Source_V_1 from axis union " +
-      "select 'valueB', valueB  from axis union " + "select 'valueC', valueC  from axis union " + "select 'valueD', valueD  from axis")
-    // sb01.show()
+    val leftJoinCount = TransposeLeftAntiDF(leftJoin, Seq("valueA", "valueB", "valueC", "valueD"),"Column_Name").withColumnRenamed("0","Extra_Record_Source_V_1")
+    leftJoinCount.show()
 
-    val final_df_s = final_df1.join(sb01,Seq("Column_Name")).orderBy("Column_Name")
+    // Including the left_anti join result in summery
+    val leftAntiJoinResult = innerJoinResult.join(leftJoinCount,Seq("Column_Name")).orderBy("Column_Name")
+    leftAntiJoinResult.show()
 
-    val valueA_21 = df2.join(df1, Seq("Primary_Key","valueA"), "leftanti").agg(sum("valueA")).select(col("sum(valueA)").as("valueA"))
-    val valueB_21 = df2.join(df1, Seq("Primary_Key","valueB"),"leftanti").agg(sum("valueB")).select(col("sum(valueB)").as("valueB"))
-    val valueC_21 = df2.join(df1, Seq("Primary_Key","valueC"),"leftanti").agg(sum("valueC")).select(col("sum(valueC)").as("valueC"))
-    val valueD_21 = df2.join(df1, Seq("Primary_Key","valueD"),"leftanti").agg(sum("valueD")).select(col("sum(valueD)").as("valueD"))
+    // Right Anti Join
+    val valueARightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueA"),"left_anti").agg(sum("valueA")).select(col("sum(valueA)").as("valueA")).withColumn("index",monotonically_increasing_id())
+    val valueBRightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueB"),"left_anti").agg(sum("valueB")).select(col("sum(valueB)").as("valueB")).withColumn("index",monotonically_increasing_id())
+    val valueCRightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueC"),"left_anti").agg(sum("valueC")).select(col("sum(valueC)").as("valueC")).withColumn("index",monotonically_increasing_id())
+    val valueDRightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueD"),"left_anti").agg(sum("valueD")).select(col("sum(valueD)").as("valueD")).withColumn("index",monotonically_increasing_id())
 
-    val df911 = spark.sqlContext.createDataFrame(valueA_21.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueA_21.schema.fields :+ StructField("index", LongType, false)))
-    val df922 = spark.sqlContext.createDataFrame(valueB_21.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueB_21.schema.fields :+ StructField("index", LongType, false)))
-    val df933 = spark.sqlContext.createDataFrame(valueC_21.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueC_21.schema.fields :+ StructField("index", LongType, false)))
-    val df944 = spark.sqlContext.createDataFrame(valueD_21.rdd.zipWithIndex.map { case (row, index) => Row.fromSeq(row.toSeq :+ index)}, StructType(valueD_21.schema.fields :+ StructField("index", LongType, false)))
+    val rightJoinAB = valueARightJoin.join(valueBRightJoin, Seq("index"))
+    val rightJoinCD = valueCRightJoin.join(valueDRightJoin, Seq("index"))
+    val rightJoin = rightJoinAB.join(rightJoinCD,Seq("index")).na.fill(0).withColumn("Column_Name",monotonically_increasing_id()).drop("index")
+    println("Present in Source not in Target:")
+    rightJoin.show()
 
-    val join901 = df911.join(df922, Seq("index"))
-    val join902 = df933.join(df944, Seq("index"))
-    val join_df10 = join901.join(join902,Seq("index")).drop("index")
-    // println("Present in Source not in Target:")
-    // join_df10.show()
+    def TransposeRightAntiDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+      val columnsValue = columns.map(x => "'" + x + "', " + x)
+      val stackCols = columnsValue.mkString(",")
+      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
+      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
+      final_df
+    }
 
-    join_df10.createOrReplaceTempView("axis")
-    val tb01 = spark.sqlContext.sql("select 'valueA' as Column_Name,valueA as Extra_Records_Target_V_1 from axis union " +
-      "select 'valueB', valueB  from axis union " + "select 'valueC', valueC  from axis union " + "select 'valueD', valueD  from axis")
-    // tb01.show()
+    val rightJoinCount = TransposeRightAntiDF(rightJoin, Seq("valueA", "valueB", "valueC", "valueD"),"Column_Name").withColumnRenamed("0","Extra_Record_Target_V_1")
+    rightJoinCount.show()
 
     println("Final Result:")
-    val final_df = final_df_s.join(tb01,Seq("Column_Name")).orderBy("Column_Name").na.fill(0)
+    val final_df = leftAntiJoinResult.join(rightJoinCount,Seq("Column_Name")).orderBy("Column_Name").na.fill(0)
     final_df.show()
 
   }

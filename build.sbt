@@ -16,3 +16,7 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.1.2"
 libraryDependencies += "org.apache.spark" %% "spark-hive" % "3.1.2" % "provided"
 
 libraryDependencies += "uk.co.gresearch.spark" %% "spark-extension" % "2.0.0-3.2"
+
+// https://mvnrepository.com/artifact/com.typesafe/config
+libraryDependencies += "com.typesafe" % "config" % "1.4.1"
+
