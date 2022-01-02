@@ -4,7 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.{sum, _}
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types.{LongType, StructField, StructType}
+import org.apache.spark.sql.types.{LongType,StringType,StructType,StructField}
 
 object SampleValidation {
 
@@ -16,16 +16,17 @@ object SampleValidation {
     // Creating log level
     spark.sparkContext.setLogLevel("ERROR")
 
+    // Reading the conf file
     val applicationConf: Config = ConfigFactory.load("application.conf")
     val sourceFile = applicationConf.getString("filePath.sourceFile")
     val targetFile = applicationConf.getString("filePath.targetFile")
 
-    // Read the source file
+    // Read the source file and converting to DF
     val sourceDF = spark.read.option("header", "true").option("inferSchema", "true").csv(sourceFile)
     println("Printing the Source DF:")
     sourceDF.show()
 
-    // Read the target file
+    // Read the target file and converting to DF
     val targetDF = spark.read.option("header", "true").option("inferSchema", "true").csv(targetFile)
     println("Printing the Target DF:")
     targetDF.show()
@@ -34,6 +35,7 @@ object SampleValidation {
     println("For No of Rows in Source where value is 1:")
     val sourceAgg = sourceDF.agg(sum("valueA"), sum("valueB"), sum("valueC"), sum("valueD"))
       .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"), col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
+      .na.fill(0)
       .withColumn("Column_Name",monotonically_increasing_id())
 
     def TransposeSourceDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
@@ -50,6 +52,7 @@ object SampleValidation {
     println("For No of Rows in Target where value is 1:")
     val targetAgg = targetDF.agg(sum("valueA"), sum("valueB"), sum("valueC"), sum("valueD"))
       .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"), col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
+      .na.fill(0)
       .withColumn("Column_Name",monotonically_increasing_id())
 
     def TransposeTargetDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
