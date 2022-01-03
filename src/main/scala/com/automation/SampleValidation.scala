@@ -18,16 +18,16 @@ object SampleValidation {
 
     // Reading the conf file
     val applicationConf: Config = ConfigFactory.load("application.conf")
-    val sourceFile = applicationConf.getString("filePath.sourceFile")
-    val targetFile = applicationConf.getString("filePath.targetFile")
+    val sourcePath = applicationConf.getString("filePath.sourceFile")
+    val targetPath = applicationConf.getString("filePath.targetFile")
 
     // Read the source file and converting to DF
-    val sourceDF = spark.read.option("header", "true").option("inferSchema", "true").csv(sourceFile)
+    val sourceDF = spark.read.option("header", "true").option("inferSchema", "true").csv(sourcePath)
     println("Printing the Source DF:")
     sourceDF.show()
 
     // Read the target file and converting to DF
-    val targetDF = spark.read.option("header", "true").option("inferSchema", "true").csv(targetFile)
+    val targetDF = spark.read.option("header", "true").option("inferSchema", "true").csv(targetPath)
     println("Printing the Target DF:")
     targetDF.show()
 
