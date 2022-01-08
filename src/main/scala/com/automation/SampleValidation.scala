@@ -52,7 +52,6 @@ object SampleValidation {
       val resultDF = newDF.select(newCols: _*)
         .na.fill(0)
         .withColumn("Column_Name", monotonically_increasing_id())
-
       resultDF
     }
 
