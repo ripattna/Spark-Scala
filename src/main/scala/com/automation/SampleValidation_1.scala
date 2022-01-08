@@ -1,9 +1,11 @@
 package com.automation
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import com.typesafe.config.{Config, ConfigFactory}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{sum, _}
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types.{LongType, StructField, StructType}
+import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
+
 
 object SampleValidation_1 {
 
@@ -11,135 +13,123 @@ object SampleValidation_1 {
 
     // Spark Session
     val spark = SparkSession.builder().master("local").appName("Test").getOrCreate()
-
-    // Creating log level
     spark.sparkContext.setLogLevel("ERROR")
 
-    // Read the source file
-    val sourceDF = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df1.csv")
-    println("Printing the Source DF:")
-    sourceDF.show()
+    // Reading the conf file
+    val applicationConf: Config = ConfigFactory.load("application.conf")
 
-    // Read the target file
-    val targetDF = spark.read.option("header", "true").option("inferSchema", "true").csv("C:\\Project\\Files\\df2.csv")
-    println("Printing the Target DF:")
-    targetDF.show()
+    val sourcePath  = applicationConf.getString("filePath.sourceFile")
+    val targetPath  = applicationConf.getString("filePath.targetFile")
 
-    // For No of Rows in Source where value is 1
-    println("For No of Rows in Source where value is 1:")
-    val sourceAgg = sourceDF.agg(sum("valueA"), sum("valueB"), sum("valueC"), sum("valueD"))
-      .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"), col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
-      .withColumn("Column_Name",monotonically_increasing_id())
+    val primaryKeyList = applicationConf.getStringList("Primary_Key.primary_Key_Value").toList
+    println(primaryKeyList)
 
-    def TransposeSourceDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
-      val columnsValue = columns.map(x => "'" + x + "', " + x)
-      val stackCols = columnsValue.mkString(",")
-      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
-      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
-      final_df
+    val primaryKeyListString = primaryKeyList.mkString(",")
+    println(primaryKeyListString)
+
+    // Read the source and target file
+    def readFile(path: String): DataFrame = {
+      val df = spark.read.option("header", "true").option("inferSchema", "true").csv(path)
+      df
     }
-    val sourceRowsCount = TransposeSourceDF(sourceAgg, Seq("valueA", "valueB", "valueC", "valueD"), "Column_Name").withColumnRenamed("0","No_Of_Rows_Source")
-    sourceRowsCount.show()
 
-    // For No of Rows in Target where value is 1
-    println("For No of Rows in Target where value is 1:")
-    val targetAgg = targetDF.agg(sum("valueA"), sum("valueB"), sum("valueC"), sum("valueD"))
-      .select(col("sum(valueA)").as("valueA"), col("sum(valueB)").as("valueB"), col("sum(valueC)").as("valueC"), col("sum(valueD)").as("valueD"))
-      .withColumn("Column_Name",monotonically_increasing_id())
+    // Source DF
+    val sourceDF = readFile(sourcePath)
+    // Target DF
+    val targetDF = readFile(targetPath)
 
-    def TransposeTargetDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
-      val columnsValue = columns.map(x => "'" + x + "', " + x)
-      val stackCols = columnsValue.mkString(",")
-      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
-      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
-      final_df
+    // Schema of Source Data in List
+    val schemaSchemaList = sourceDF.columns.toList
+    // println(schemaSchemaList)
+    // Columns to select after ignoring Primary Key
+    val columnToSelect = schemaSchemaList diff primaryKeyList
+    // println(columnToSelect)
+
+    def rowsCount(df: DataFrame): DataFrame = {
+      val newDF = df.groupBy().sum(columnToSelect: _*)
+      val colRegex = raw"^.+\((.*?)\)".r
+      val newCols = newDF.columns.map(x => col(x).as(colRegex.replaceAllIn(x, m => m.group(1))))
+      val resultDF = newDF.select(newCols: _*)
+        .na.fill(0)
+        .withColumn("Column_Name", monotonically_increasing_id())
+
+      resultDF
     }
-    val targetRowsCount = TransposeTargetDF(targetAgg, Seq("valueA", "valueB", "valueC", "valueD"), "Column_Name").withColumnRenamed("0","No_Of_Rows_Target")
-    targetRowsCount.show()
 
-    // Source and Target Row Count
-    val sourceAndTargetCount = sourceRowsCount.join(targetRowsCount, Seq("Column_Name"),"inner")
-    sourceAndTargetCount.show()
+    val sourceRowCount = rowsCount(sourceDF)
+    sourceRowCount.show()
+    val targetRowCount = rowsCount(targetDF)
+    targetRowCount.show()
+
+    val col1 = columnToSelect(0)
+    val col2 = columnToSelect(1)
+    val col3 = columnToSelect(2)
+    val col4 = columnToSelect(3)
 
     // Inner join to get the Overlap Count
-    val valueAInner = sourceDF.join(targetDF, Seq("Primary_Key","valueA"),"inner").agg(sum("valueA")).select(col("sum(valueA)").as("valueA")).withColumn("index",monotonically_increasing_id())
-    val valueBInner = sourceDF.join(targetDF, Seq("Primary_Key","valueB"),"inner").agg(sum("valueB")).select(col("sum(valueB)").as("valueB")).withColumn("index",monotonically_increasing_id())
-    val valueCInner = sourceDF.join(targetDF, Seq("Primary_Key","valueC"),"inner").agg(sum("valueC")).select(col("sum(valueC)").as("valueC")).withColumn("index",monotonically_increasing_id())
-    val valueDInner = sourceDF.join(targetDF, Seq("Primary_Key","valueD"),"inner").agg(sum("valueD")).select(col("sum(valueD)").as("valueD")).withColumn("index",monotonically_increasing_id())
 
-    val innerJoinAB = valueAInner.join(valueBInner, Seq("index"))
-    val innerJoinCD = valueCInner.join(valueDInner, Seq("index"))
-    val innerJoin = innerJoinAB.join(innerJoinCD,Seq("index")).na.fill(0).withColumn("Column_Name",monotonically_increasing_id()).drop("index")
-    // println("Inner join result:")
-    // innerJoin.show()
+    def joinResult(joinType: String): DataFrame ={
 
-    def TransposeInnerDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+      val valueAInner = sourceDF.join(targetDF, Seq(primaryKeyListString, col1), joinType).agg(sum(col1).as(col1)).withColumn("index", monotonically_increasing_id())
+      val valueBInner = sourceDF.join(targetDF, Seq(primaryKeyListString, col2), joinType).agg(sum(col2).as(col2)).withColumn("index", monotonically_increasing_id())
+      val valueCInner = sourceDF.join(targetDF, Seq(primaryKeyListString, col3), joinType).agg(sum(col3).as(col3)).withColumn("index", monotonically_increasing_id())
+      val valueDInner = sourceDF.join(targetDF, Seq(primaryKeyListString, col4), joinType).agg(sum(col4).as(col4)).withColumn("index", monotonically_increasing_id())
+
+      val innerJoinAB = valueAInner.join(valueBInner, Seq("index"))
+      val innerJoinCD = valueCInner.join(valueDInner, Seq("index"))
+      val resultSet = innerJoinAB.join(innerJoinCD,Seq("index")).na.fill(0)
+        .withColumn("Column_Name", monotonically_increasing_id()).drop("index")
+
+      resultSet
+    }
+
+    // Overlap records
+    val overlapRowCount = joinResult("inner")
+    overlapRowCount.show()
+
+    // Extra records in source
+    val extraSourceRowCount = joinResult("left_anti")
+    extraSourceRowCount.show()
+
+    def extraRecordTarget(joinType: String): DataFrame ={
+
+      val valueAInner = targetDF.join(sourceDF, Seq(primaryKeyListString, col1), joinType).agg(sum(col1).as(col1)).withColumn("index", monotonically_increasing_id())
+      val valueBInner = targetDF.join(sourceDF, Seq(primaryKeyListString, col2), joinType).agg(sum(col2).as(col2)).withColumn("index", monotonically_increasing_id())
+      val valueCInner = targetDF.join(sourceDF, Seq(primaryKeyListString, col3), joinType).agg(sum(col3).as(col3)).withColumn("index", monotonically_increasing_id())
+      val valueDInner = targetDF.join(sourceDF, Seq(primaryKeyListString, col4), joinType).agg(sum(col4).as(col4)).withColumn("index", monotonically_increasing_id())
+
+      val innerJoinAB = valueAInner.join(valueBInner, Seq("index"))
+      val innerJoinCD = valueCInner.join(valueDInner, Seq("index"))
+      val extraTargetResultSet = innerJoinAB.join(innerJoinCD,Seq("index")).na.fill(0)
+        .withColumn("Column_Name", monotonically_increasing_id()).drop("index")
+
+      extraTargetResultSet
+    }
+
+    val extraTargetRowCount = extraRecordTarget("left_anti")
+    extraTargetRowCount.show()
+
+    def TransposeDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
       val columnsValue = columns.map(x => "'" + x + "', " + x)
       val stackCols = columnsValue.mkString(",")
       val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
-      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
-      final_df
-    }
-    val innerCount = TransposeInnerDF(innerJoin, Seq("valueA", "valueB", "valueC", "valueD"), "Column_Name").withColumnRenamed("0","Overlap_Count")
-    innerCount.show()
-
-    // Including the inner join result in summery
-    val innerJoinResult = sourceAndTargetCount.join(innerCount,Seq("Column_Name"))
-    innerJoinResult.show()
-
-    val valueALeftJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueA"),"left_anti").agg(sum("valueA")).select(col("sum(valueA)").as("valueA")).withColumn("index",monotonically_increasing_id())
-    val valueBLeftJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueB"),"left_anti").agg(sum("valueB")).select(col("sum(valueB)").as("valueB")).withColumn("index",monotonically_increasing_id())
-    val valueCInnerJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueC"),"left_anti").agg(sum("valueC")).select(col("sum(valueC)").as("valueC")).withColumn("index",monotonically_increasing_id())
-    val valueDInnerJoin = sourceDF.join(targetDF, Seq("Primary_Key","valueD"),"left_anti").agg(sum("valueD")).select(col("sum(valueD)").as("valueD")).withColumn("index",monotonically_increasing_id())
-
-    val leftJoinAB = valueALeftJoin.join(valueBLeftJoin, Seq("index"))
-    val leftJoinCD = valueCInnerJoin.join(valueDInnerJoin, Seq("index"))
-    val leftJoin = leftJoinAB.join(leftJoinCD,Seq("index")).na.fill(0).withColumn("Column_Name",monotonically_increasing_id()).drop("index")
-    println("Present in Source not in Target:")
-    leftJoin.show()
-
-    def TransposeLeftAntiDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
-      val columnsValue = columns.map(x => "'" + x + "', " + x)
-      val stackCols = columnsValue.mkString(",")
-      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
-      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
-      final_df
+      val transposeDF = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
+      transposeDF
     }
 
-    val leftJoinCount = TransposeLeftAntiDF(leftJoin, Seq("valueA", "valueB", "valueC", "valueD"),"Column_Name").withColumnRenamed("0","Extra_Record_Source_V_1")
-    leftJoinCount.show()
+    val sourceRowsCount = TransposeDF(sourceRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","No_Of_Rec_Source")
+    val targetRowsCount = TransposeDF(targetRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","No_Of_Rec_Target")
+    val overlapRowsCount = TransposeDF(overlapRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","Overlap_Count")
+    val extraSourceRowsCount = TransposeDF(extraSourceRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","Extra_Rec_Source")
+    val extraTargetRowsCount = TransposeDF(extraTargetRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","Extra_Rec_Target")
 
-    // Including the left_anti join result in summery
-    val leftAntiJoinResult = innerJoinResult.join(leftJoinCount,Seq("Column_Name")).orderBy("Column_Name")
-    leftAntiJoinResult.show()
-
-    // Right Anti Join
-    val valueARightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueA"),"left_anti").agg(sum("valueA")).select(col("sum(valueA)").as("valueA")).withColumn("index",monotonically_increasing_id())
-    val valueBRightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueB"),"left_anti").agg(sum("valueB")).select(col("sum(valueB)").as("valueB")).withColumn("index",monotonically_increasing_id())
-    val valueCRightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueC"),"left_anti").agg(sum("valueC")).select(col("sum(valueC)").as("valueC")).withColumn("index",monotonically_increasing_id())
-    val valueDRightJoin = targetDF.join(sourceDF, Seq("Primary_Key","valueD"),"left_anti").agg(sum("valueD")).select(col("sum(valueD)").as("valueD")).withColumn("index",monotonically_increasing_id())
-
-    val rightJoinAB = valueARightJoin.join(valueBRightJoin, Seq("index"))
-    val rightJoinCD = valueCRightJoin.join(valueDRightJoin, Seq("index"))
-    val rightJoin = rightJoinAB.join(rightJoinCD,Seq("index")).na.fill(0).withColumn("Column_Name",monotonically_increasing_id()).drop("index")
-    println("Present in Source not in Target:")
-    rightJoin.show()
-
-    def TransposeRightAntiDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
-      val columnsValue = columns.map(x => "'" + x + "', " + x)
-      val stackCols = columnsValue.mkString(",")
-      val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")").select(pivotCol, "col0", "col1")
-      val final_df = df_1.groupBy(col("col0")).pivot(pivotCol).agg(concat_ws("", collect_list(col("col1")))).withColumnRenamed("col0", pivotCol)
-      final_df
-    }
-
-    val rightJoinCount = TransposeRightAntiDF(rightJoin, Seq("valueA", "valueB", "valueC", "valueD"),"Column_Name").withColumnRenamed("0","Extra_Record_Target_V_1")
-    rightJoinCount.show()
-
-    println("Final Result:")
-    val final_df = leftAntiJoinResult.join(rightJoinCount,Seq("Column_Name")).orderBy("Column_Name").na.fill(0)
-    final_df.show()
-
+    // Final Result DF
+    val finalDF = sourceRowsCount
+      .join(targetRowsCount, Seq("Column_Name"),"inner")
+      .join(overlapRowsCount, Seq("Column_Name"),"inner")
+      .join(extraSourceRowsCount, Seq("Column_Name"),"inner")
+      .join(extraTargetRowsCount, Seq("Column_Name"),"inner")
+    finalDF.show()
   }
 
 }
