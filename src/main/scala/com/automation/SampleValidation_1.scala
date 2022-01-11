@@ -21,7 +21,7 @@ object SampleValidation_1 {
     val sourcePath  = applicationConf.getString("filePath.sourceFile")
     val targetPath  = applicationConf.getString("filePath.targetFile")
 
-    val primaryKeyList = applicationConf.getStringList("Primary_Key.primary_Key_Value").toList
+    val primaryKeyList = applicationConf.getStringList("primaryKey.primaryKeyValue").toList
     println(primaryKeyList)
 
     val primaryKeyListString = primaryKeyList.mkString(",")

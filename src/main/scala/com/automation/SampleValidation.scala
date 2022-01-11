@@ -21,14 +21,19 @@ object SampleValidation {
     val sourcePath: String = applicationConf.getString("filePath.sourceFile")
     val targetPath: String = applicationConf.getString("filePath.targetFile")
 
-    val primaryKeyList = applicationConf.getStringList("Primary_Key.primary_Key_Value").toList
+    // File Format
+    val fileType: String = applicationConf.getString("fileFormat.fileType")
+    // println(fileType)
+
+    val primaryKeyList = applicationConf.getStringList("primaryKey.primaryKeyValue").toList
+    // println(primaryKeyList)
 
     val primaryKeyListString = primaryKeyList.mkString(",")
     // println(primaryKeyListString)
 
     // Read the source and target file
     def readFile(path: String): DataFrame = {
-      val df = spark.read.option("header", "true").option("inferSchema", "true").csv(path)
+      val df = spark.read.option("header", "true").option("inferSchema", "true").format(fileType).load(path)
       df
     }
 
@@ -68,11 +73,11 @@ object SampleValidation {
       resultSet
     }
 
-    // Overlap records
+    // Overlap Records
     val overlapRowCount = joinResult("inner")
     // overlapRowCount.show()
 
-    // Extra records in source
+    // Extra Records in Source
     val extraSourceRowCount = joinResult("left_anti")
     // extraSourceRowCount.show()
 
@@ -83,7 +88,7 @@ object SampleValidation {
         .reduce((x, y) => x.join(y,"Column_Name"))
       extraTargetResultSet
     }
-
+    // Extra Records in Target
     val extraTargetRowCount = extraRecordTarget("left_anti")
     // extraTargetRowCount.show()
 
