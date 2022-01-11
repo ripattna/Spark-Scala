@@ -30,10 +30,11 @@ class ReconAutomation{
 
   def joinResult(joinType: String, column: List[String],sourceDF: DataFrame,targetDF: DataFrame,primaryKeyListString: String): DataFrame ={
     val columnToSelect = column
-    var resultSet = columnToSelect.map( i => (sourceDF.join(targetDF, Seq(primaryKeyListString, i), joinType).agg(sum(i).as(i))
+    val resultSet = columnToSelect.map( i => (sourceDF.join(targetDF, Seq(primaryKeyListString, i), joinType).agg(sum(i).as(i))
       .na.fill(0)
       .withColumn("Column_Name", monotonically_increasing_id())))
       .reduce((x, y) => x.join(y,"Column_Name"))
+
     resultSet
   }
 
@@ -87,7 +88,7 @@ object ReconAutomationObject {
     val extraTargetRowCount = new ReconAutomation().joinResult("left_anti",  columnToSelect, targetDF, sourceDF, primaryKeyListString)
     // extraTargetRowCount.show()
 
-    // Transpose
+    // Transpose the result
     val sourceRowsCount = new ReconAutomation().TransposeDF(sourceRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","No_Of_Rec_Source")
     val targetRowsCount = new ReconAutomation().TransposeDF(targetRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","No_Of_Rec_Target")
     val overlapRowsCount = new ReconAutomation().TransposeDF(overlapRowCount, columnToSelect, "Column_Name").withColumnRenamed("0","Overlap_Count")
