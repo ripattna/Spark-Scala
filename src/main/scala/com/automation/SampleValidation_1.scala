@@ -16,7 +16,7 @@ object SampleValidation_1 {
     spark.sparkContext.setLogLevel("ERROR")
 
     // Reading the conf file
-    val applicationConf: Config = ConfigFactory.load("application.conf")
+    val applicationConf: Config = ConfigFactory.load("Config/application.conf")
 
     val sourcePath  = applicationConf.getString("filePath.sourceFile")
     val targetPath  = applicationConf.getString("filePath.targetFile")
