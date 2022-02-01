@@ -4,6 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.col
 
 /**
  * Contains comparison related operations
@@ -28,13 +29,6 @@ class CompareTwoDF {
     return df
   }
 
-  /*
-  def joinResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String], joinType: String, columns: List[String]): DataFrame ={
-    val result = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, joinType)
-    return result
-  }
-   */
-
   /**
    * Can compare two files whether S3 , HDFS , local file system
    * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
@@ -42,20 +36,31 @@ class CompareTwoDF {
    * @param sourceDF
    * @param targetDF
    * @param primaryKey
-   * @param joinType
    * @param columns
    * @return  DataFrame
    */
-  def compareResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String],joinType: String,columns: List[String]): DataFrame ={
-    val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, joinType)
-    val compResult = columns
-      .foldLeft(joinResult) {(df, name) => df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y"))
-        .otherwise(lit("N")))}
+  def compareResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String],  columns: List[String]): DataFrame = {
 
+    val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
+    val compResult = columns.foldLeft(joinResult) { (df, name) =>
+      df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y"))
+        .otherwise(lit("N")))}
       .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y" && col("M_Quantity") === "Y", lit("Y"))
         .otherwise(lit("N")))
+    val compRes = columns.foldLeft(joinResult) { (df, name) => df.withColumn(name + "_M", when(col("sourceDF." + name) =!= col("targetDF." + name), lit(name))) }
+      .withColumn("MissMatch_Column", concat_ws(",", columns.map(name => col(name + "_M")): _*))
+    val resultDF = compRes.join(compResult, primaryKey, "inner")
+      .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
+
+    return resultDF
+
+    /**
+    //.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+    //val res = compResult.select(compResult.columns.filter(_.startsWith("M_")).map(compResult(_)):_*)
+    //val source = compResult.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+    //val rf = compResult.filter(col("sourceDF.*").notEqual("") && col("group").notEqual(""))
     // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
-    return compResult
+     */
   }
 
   /**
@@ -64,9 +69,6 @@ class CompareTwoDF {
    * For S3 location, "s3n://myBucket/myFile1.csv"
    * @param sourceDF
    * @param targetDF
-   * @param primaryKey
-   * @param joinType
-   * @param columns
    * @return  DataFrame
    */
   def matchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame ={
@@ -80,9 +82,6 @@ class CompareTwoDF {
    * For S3 location, "s3n://myBucket/myFile1.csv"
    * @param sourceDF
    * @param targetDF
-   * @param primaryKey
-   * @param joinType
-   * @param columns
    * @return  DataFrame
    */
   def mismatchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame ={
@@ -118,12 +117,11 @@ object CompareTwoDFObject {
     // Columns to select after ignoring Primary Key
     val columnToSelect = schemaSchemaList diff primaryKeyList
 
-    // val joinResult = new CompareTwoDF().joinResult(sourceDF, targetDF, primaryKeyList, "inner", columnToSelect)
-    // joinResult.show()
+    println("Final DataFrame:")
+    val comRes = new CompareTwoDF().compareResult(sourceDF, targetDF, primaryKeyList, columnToSelect)
+    comRes.show(false)
 
-    val comRes = new CompareTwoDF().compareResult(sourceDF, targetDF, primaryKeyList, "inner", columnToSelect)
-    comRes.show()
-
+    /*
     println("Matching Records:")
     val matchRes = new CompareTwoDF().matchRecords(sourceDF, targetDF)
     matchRes.show()
@@ -135,6 +133,7 @@ object CompareTwoDFObject {
     println("Mismatch Rows in Target:")
     val targetMismatchRecords = new CompareTwoDF().mismatchRecords(targetDF, sourceDF)
     targetMismatchRecords.show()
+     */
 
   }
 }
