@@ -28,10 +28,12 @@ class CompareTwoDF {
     return df
   }
 
+  /*
   def joinResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String], joinType: String, columns: List[String]): DataFrame ={
     val result = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, joinType)
     return result
   }
+   */
 
   /**
    * Can compare two files whether S3 , HDFS , local file system
@@ -46,8 +48,12 @@ class CompareTwoDF {
    */
   def compareResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String],joinType: String,columns: List[String]): DataFrame ={
     val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, joinType)
-    val compResult = columns.foldLeft(joinResult) {(df, name) => df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y")).otherwise(lit("N")))}
-      .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y" && col("M_Quantity") === "Y", lit("Y")).otherwise(lit("N")))
+    val compResult = columns
+      .foldLeft(joinResult) {(df, name) => df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y"))
+        .otherwise(lit("N")))}
+
+      .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y" && col("M_Quantity") === "Y", lit("Y"))
+        .otherwise(lit("N")))
     // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
     return compResult
   }
@@ -112,8 +118,8 @@ object CompareTwoDFObject {
     // Columns to select after ignoring Primary Key
     val columnToSelect = schemaSchemaList diff primaryKeyList
 
-    val joinResult = new CompareTwoDF().joinResult(sourceDF, targetDF, primaryKeyList, "inner", columnToSelect)
-    joinResult.show()
+    // val joinResult = new CompareTwoDF().joinResult(sourceDF, targetDF, primaryKeyList, "inner", columnToSelect)
+    // joinResult.show()
 
     val comRes = new CompareTwoDF().compareResult(sourceDF, targetDF, primaryKeyList, "inner", columnToSelect)
     comRes.show()
