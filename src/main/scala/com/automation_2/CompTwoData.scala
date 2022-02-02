@@ -6,10 +6,11 @@ import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.col
 
+
 /**
  * Contains comparison related operations
  */
-class CompareTwoDF {
+class CompareTwoData {
 
   // Spark Session
   val spark = SparkSession.builder().master("local").appName("CompareTwoDF").getOrCreate()
@@ -46,18 +47,21 @@ class CompareTwoDF {
       println("Column names were different in source and target!!!")
       throw new Exception("Column Names Did Not Match")
     }
-    // Make sure that schema of both DataFrames are same
+
     else if (sourceDF.schema != targetDF.schema) {
       print("Column schema count are different in source and target!!!")
       throw new Exception("Column Count Did Not Match")
     }
-    else
-    {
-      try {
+    else {
+      try{
+        val leftCols = sourceDF.columns.mkString(",")
+        println(leftCols)
+        val rightCols = targetDF.columns.mkString(",")
+        println(rightCols)
+
         val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
-        val compResult = columns.foldLeft(joinResult) { (df, name) =>
-          df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y"))
-            .otherwise(lit("N")))}
+        val compResult = columns.foldLeft(joinResult) {(df, name) => df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y"))
+          .otherwise(lit("N")))}
           .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y" && col("M_Quantity") === "Y", lit("Y"))
             .otherwise(lit("N")))
 
@@ -67,8 +71,16 @@ class CompareTwoDF {
           .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
 
         return resultDF
-         }
+      }
+
     }
+    /**
+    //.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+    //val res = compResult.select(compResult.columns.filter(_.startsWith("M_")).map(compResult(_)):_*)
+    //val source = compResult.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+    //val rf = compResult.filter(col("sourceDF.*").notEqual("") && col("group").notEqual(""))
+    // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
+     */
   }
 
   /**
@@ -97,7 +109,7 @@ class CompareTwoDF {
   }
 
 }
-object CompareTwoDFObject {
+object CompareTwoDataObject {
 
   def main(args: Array[String]): Unit = {
 
@@ -111,11 +123,11 @@ object CompareTwoDFObject {
     // Reading the PrimaryKey from config
     val primaryKeyList = applicationConf.getStringList("primaryKey.primaryKeyValue").toList
 
-    val sourceDF = new CompareTwoDF().readFile(fileType, sourcePath)
+    val sourceDF = new CompareTwoData().readFile(fileType, sourcePath)
     println("Source Data:")
     sourceDF.show()
 
-    val targetDF = new CompareTwoDF().readFile(fileType, targetPath)
+    val targetDF = new CompareTwoData().readFile(fileType, targetPath)
     println("Target Data:")
     targetDF.show()
 
@@ -125,19 +137,19 @@ object CompareTwoDFObject {
     val columnToSelect = schemaSchemaList diff primaryKeyList
 
     println("Compare DataFrame:")
-    val comRes = new CompareTwoDF().compareResult(sourceDF, targetDF, primaryKeyList, columnToSelect)
+    val comRes = new CompareTwoData().compareResult(sourceDF, targetDF, primaryKeyList, columnToSelect)
     comRes.show(false)
 
     println("Matching Records:")
-    val matchRes = new CompareTwoDF().matchRecords(sourceDF, targetDF)
+    val matchRes = new CompareTwoData().matchRecords(sourceDF, targetDF)
     matchRes.show()
 
     println("Mismatch Rows in Source:")
-    val sourceMismatchRecords = new CompareTwoDF().mismatchRecords(sourceDF, targetDF)
+    val sourceMismatchRecords = new CompareTwoData().mismatchRecords(sourceDF, targetDF)
     sourceMismatchRecords.show()
 
     println("Mismatch Rows in Target:")
-    val targetMismatchRecords = new CompareTwoDF().mismatchRecords(targetDF, sourceDF)
+    val targetMismatchRecords = new CompareTwoData().mismatchRecords(targetDF, sourceDF)
     targetMismatchRecords.show()
 
   }

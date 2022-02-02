@@ -12,6 +12,7 @@ object Test4 {
 
     val df1 = spark.read.option("header", "true").option("inferSchema", "true").format("csv").load("src/main/resources/Data/File_1.csv")
     val df2 = spark.read.option("header", "true").option("inferSchema", "true").format("csv").load("src/main/resources/Data/File_2.csv")
+
     val columns = df1.columns
     val joinResult = df1.alias("d1").join(df2.alias("d2"), col("d1.ID") === col("d2.ID"), "left")
 
