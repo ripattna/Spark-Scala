@@ -41,83 +41,83 @@ class CompareTwoData {
    * @return  DataFrame
    */
   def compareResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String],  columns: List[String]): DataFrame = {
-    // Make sure that column names match in both DataFrames
-    if (!sourceDF.columns.sameElements(targetDF.columns))
-    {
-      println("Column names were different in source and target!!!")
-      throw new Exception("Column Names Did Not Match")
+    try {
+      // Make sure that column names match in both DataFrames
+      if (!sourceDF.columns.sameElements(targetDF.columns)) {
+        println("Column names were different in source and target!!!")
+        throw new Exception("Column Names Did Not Match")
+      }
+      // Make sure that schema of both DataFrames are same
+      else if (sourceDF.schema != targetDF.schema) {
+        print("Column schema count are different in source and target!!!")
+        throw new Exception("Column Count Did Not Match")
+      }
     }
 
-    else if (sourceDF.schema != targetDF.schema) {
-      print("Column schema count are different in source and target!!!")
-      throw new Exception("Column Count Did Not Match")
-    }
-    else {
-      try{
-        val leftCols = sourceDF.columns.mkString(",")
-        println(leftCols)
-        val rightCols = targetDF.columns.mkString(",")
-        println(rightCols)
+    try {
+      // Joining two DataFrames based on PrimaryKey
+      val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
 
-        // Joining two DataFrames based on PrimaryKey
-        val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
-
-        // Doing column level comparison and assigning "Y" if the source and target column are matching else assigning "N" using WithColumn
-        val compResult = columns.foldLeft(joinResult) { (df, name) =>
-          df.withColumn("M_" + name,when(col("sourceDF." + name) === col("targetDF." + name),
-            lit("Y")).otherwise(lit("N")))}
-
-          .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y"
-            && col("M_Quantity") === "Y", lit("Y")).otherwise(lit("N")))
-
-        // Finding the column that are having mismatch in Source and Target
-        val compRes = columns.foldLeft(joinResult) { (df, name) => df.withColumn(name + "_M",
-          when(col("sourceDF." + name) =!= col("targetDF." + name), lit(name))) }
-          .withColumn("MissMatch_Column", concat_ws(",", columns.map(name => col(name + "_M")): _*))
-
-        // Final join to select the columns and the Mismatch columns and the column level comparison
-        val resultDF = compRes.join(compResult, primaryKey, "inner")
-          .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
-
-        return resultDF
+      // Doing column level comparison and assigning "Y" if the source and target column are matching else assigning "N" using WithColumn
+      val compResult = columns.foldLeft(joinResult) { (df, name) =>
+        df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name),
+          lit("Y")).otherwise(lit("N")))
       }
 
+        .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y"
+          && col("M_Quantity") === "Y", lit("Y")).otherwise(lit("N")))
+
+      // Finding the column that are having mismatch in Source and Target
+      val compRes = columns.foldLeft(joinResult) { (df, name) =>
+        df.withColumn(name + "_M",
+          when(col("sourceDF." + name) =!= col("targetDF." + name), lit(name)))
+      }
+        .withColumn("MissMatch_Column", concat_ws(",", columns.map(name => col(name + "_M")): _*))
+
+      // Final join to select the columns and the Mismatch columns and the column level comparison
+      val resultDF = compRes.join(compResult, primaryKey, "inner")
+        .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
+
+      return resultDF
+      /**
+       * //.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+       * //val res = compResult.select(compResult.columns.filter(_.startsWith("M_")).map(compResult(_)):_*)
+       * //val source = compResult.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+       * //val rf = compResult.filter(col("sourceDF.*").notEqual("") && col("group").notEqual(""))
+       * // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
+       */
+
     }
+  }
     /**
-    //.select(sourceDF.columns.map(x => sourceDF(x)): _*)
-    //val res = compResult.select(compResult.columns.filter(_.startsWith("M_")).map(compResult(_)):_*)
-    //val source = compResult.select(sourceDF.columns.map(x => sourceDF(x)): _*)
-    //val rf = compResult.filter(col("sourceDF.*").notEqual("") && col("group").notEqual(""))
-    // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
+     * Can compare two files whether S3 , HDFS , local file system
+     * This method return the matching records in both of the source and target datasets
+     *
+     * @param sourceDF
+     * @param targetDF
+     * @return DataFrame
      */
-  }
+    def matchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame = {
+      val matchRes = sourceDF.intersect(targetDF)
+      matchRes
+    }
 
-  /**
-   * Can compare two files whether S3 , HDFS , local file system
-   * This method return the matching records in both of the source and target datasets
-   * @param sourceDF
-   * @param targetDF
-   * @return  DataFrame
-   */
-  def matchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame ={
-    val matchRes = sourceDF.intersect(targetDF)
-    matchRes
-  }
-
-  /**
-   * Can compare two files whether S3 , HDFS , local file system
-   * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
-   * For S3 location, "s3n://myBucket/myFile1.csv"
-   * @param sourceDF
-   * @param targetDF
-   * @return  DataFrame
-   */
-  def mismatchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame ={
-    val mismatchSourceDF = sourceDF.exceptAll(targetDF).toDF()
-    return mismatchSourceDF
-  }
+    /**
+     * Can compare two files whether S3 , HDFS , local file system
+     * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
+     * For S3 location, "s3n://myBucket/myFile1.csv"
+     *
+     * @param sourceDF
+     * @param targetDF
+     * @return DataFrame
+     */
+    def mismatchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame = {
+      val mismatchSourceDF = sourceDF.exceptAll(targetDF).toDF()
+      return mismatchSourceDF
+    }
 
 }
+
 object CompareTwoDataObject {
 
   def main(args: Array[String]): Unit = {
