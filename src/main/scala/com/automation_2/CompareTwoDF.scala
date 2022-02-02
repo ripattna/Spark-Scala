@@ -39,7 +39,7 @@ class CompareTwoDF {
    * @param columns
    * @return  DataFrame
    */
-  def compareResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String],  columns: List[String]): DataFrame = {
+  def compareResult(sourceDF: DataFrame,targetDF: DataFrame,primaryKey: List[String],columns: List[String]): DataFrame={
     // Make sure that column names match in both DataFrames
     if (!sourceDF.columns.sameElements(targetDF.columns))
     {
@@ -54,21 +54,28 @@ class CompareTwoDF {
     else
     {
       try {
+        // Joining two DataFrames based on PrimaryKey
         val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
 
+        // Doing column level comparison and assigning "Y" if the source and target column are matching else assigning "N" using WithColumn
         val compResult = columns.foldLeft(joinResult) { (df, name) =>
-          df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y"))
-            .otherwise(lit("N")))}
-          .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y" && col("M_Quantity") === "Y", lit("Y"))
-            .otherwise(lit("N")))
+          df.withColumn("M_" + name,when(col("sourceDF." + name) === col("targetDF." + name),
+            lit("Y")).otherwise(lit("N")))}
 
-        val compRes = columns.foldLeft(joinResult) { (df, name) => df.withColumn(name + "_M", when(col("sourceDF." + name) =!= col("targetDF." + name), lit(name))) }
+          .withColumn("MATCHING", when(col("M_Product") === "Y" && col("M_Country") === "Y"
+            && col("M_Quantity") === "Y", lit("Y")).otherwise(lit("N")))
+
+        // Finding the column that are having mismatch in Source and Target
+        val compRes = columns.foldLeft(joinResult) { (df, name) => df.withColumn(name + "_M",
+          when(col("sourceDF." + name) =!= col("targetDF." + name), lit(name))) }
           .withColumn("MissMatch_Column", concat_ws(",", columns.map(name => col(name + "_M")): _*))
 
+        // Final join to select the columns and the Mismatch columns and the column level comparison
         val resultDF = compRes.join(compResult, primaryKey, "inner")
           .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
 
         return resultDF
+
          }
     }
   }

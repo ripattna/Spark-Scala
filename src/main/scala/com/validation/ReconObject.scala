@@ -8,7 +8,7 @@ object ReconObject{
   def main(args: Array[String]): Unit = {
 
     // Reading the conf file
-    val applicationConf: Config = ConfigFactory.load("application.conf")
+    val applicationConf: Config = ConfigFactory.load("Config/application.conf")
 
     // Reading the source and target file from config
     val sourcePath: String = applicationConf.getString("filePath.sourceFile")
