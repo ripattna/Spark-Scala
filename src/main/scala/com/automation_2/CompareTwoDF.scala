@@ -55,6 +55,7 @@ class CompareTwoDF {
     {
       try {
         val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
+
         val compResult = columns.foldLeft(joinResult) { (df, name) =>
           df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name), lit("Y"))
             .otherwise(lit("N")))}
@@ -63,6 +64,7 @@ class CompareTwoDF {
 
         val compRes = columns.foldLeft(joinResult) { (df, name) => df.withColumn(name + "_M", when(col("sourceDF." + name) =!= col("targetDF." + name), lit(name))) }
           .withColumn("MissMatch_Column", concat_ws(",", columns.map(name => col(name + "_M")): _*))
+
         val resultDF = compRes.join(compResult, primaryKey, "inner")
           .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
 
