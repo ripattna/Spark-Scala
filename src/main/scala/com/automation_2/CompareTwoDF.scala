@@ -6,6 +6,8 @@ import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.col
 
+import scala.util.control.Exception
+
 /**
  * Contains comparison related operations
  */
@@ -33,26 +35,28 @@ class CompareTwoDF {
    * Can compare two files whether S3 , HDFS , local file system
    * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
    * For S3 location, "s3n://myBucket/myFile1.csv"
-   * @param sourceDF
-   * @param targetDF
-   * @param primaryKey
+   * @param sourceDF sourceDataFrame which have to compare with targetDataFrame
+   * @param targetDF targetDataFrame which have to compare with sourceDataFrame
+   * @param primaryKey PrimaryKey of the source & Target it could be more than 1
    * @param columns
    * @return  DataFrame
    */
-  def compareResult(sourceDF: DataFrame,targetDF: DataFrame,primaryKey: List[String],columns: List[String]): DataFrame={
-    // Make sure that column names match in both DataFrames
-    if (!sourceDF.columns.sameElements(targetDF.columns))
-    {
-      println("Column names were different in source and target!!!")
-      throw new Exception("Column Names Did Not Match")
+  def compareResult(sourceDF: DataFrame,targetDF: DataFrame,primaryKey: List[String],columns: List[String]): DataFrame ={
+    try {
+      // Make sure that column names match in both DataFrames
+      if (!sourceDF.columns.sameElements(targetDF.columns))
+      {
+        println("Column names were different in source and target!!!")
+        throw new Exception("Column Names Did Not Match")
+      }
+      // Make sure that schema of both DataFrames are same
+      else if (sourceDF.schema != targetDF.schema)
+      {
+        print("Column schema count are different in source and target!!!")
+        throw new Exception("Column Count Did Not Match")
+      }
     }
-    // Make sure that schema of both DataFrames are same
-    else if (sourceDF.schema != targetDF.schema) {
-      print("Column schema count are different in source and target!!!")
-      throw new Exception("Column Count Did Not Match")
-    }
-    else
-    {
+
       try {
         // Joining two DataFrames based on PrimaryKey
         val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
@@ -75,10 +79,8 @@ class CompareTwoDF {
           .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
 
         return resultDF
-
          }
-    }
-  }
+   }
 
   /**
    * Can compare two files whether S3 , HDFS , local file system

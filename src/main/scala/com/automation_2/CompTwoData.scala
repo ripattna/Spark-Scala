@@ -5,11 +5,13 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.col
-
+import java.io.FileNotFoundException
+import scala.util.Failure
 
 /**
  * Contains comparison related operations
  */
+
 class CompareTwoData {
 
   // Spark Session
@@ -43,12 +45,14 @@ class CompareTwoData {
   def compareResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String],  columns: List[String]): DataFrame = {
     try {
       // Make sure that column names match in both DataFrames
-      if (!sourceDF.columns.sameElements(targetDF.columns)) {
+      if (!sourceDF.columns.sameElements(targetDF.columns))
+      {
         println("Column names were different in source and target!!!")
         throw new Exception("Column Names Did Not Match")
       }
       // Make sure that schema of both DataFrames are same
-      else if (sourceDF.schema != targetDF.schema) {
+      else if (sourceDF.schema != targetDF.schema)
+      {
         print("Column schema count are different in source and target!!!")
         throw new Exception("Column Count Did Not Match")
       }
