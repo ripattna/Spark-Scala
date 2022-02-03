@@ -5,7 +5,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.col
-
 import scala.util.control.Exception
 
 /**
@@ -57,7 +56,13 @@ class CompareTwoDF {
       }
     }
 
-      try {
+    catch
+    {
+      case _: Throwable => println("Got some other kind of exception")
+      case _: Throwable => println("exception ignored")
+    }
+
+    try {
         // Joining two DataFrames based on PrimaryKey
         val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
 
@@ -79,8 +84,8 @@ class CompareTwoDF {
           .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
 
         return resultDF
-         }
-   }
+    }
+  }
 
   /**
    * Can compare two files whether S3 , HDFS , local file system
