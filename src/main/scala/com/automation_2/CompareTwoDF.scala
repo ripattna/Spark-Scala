@@ -1,11 +1,13 @@
 package com.automation_2
 
+
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.col
-import scala.util.control.Exception
+
+import scala.util.Failure
+
 
 /**
  * Contains comparison related operations
@@ -43,23 +45,23 @@ class CompareTwoDF {
   def compareResult(sourceDF: DataFrame,targetDF: DataFrame,primaryKey: List[String],columns: List[String]): DataFrame ={
     try {
       // Make sure that column names match in both DataFrames
-      if (!sourceDF.columns.sameElements(targetDF.columns))
+      if (sourceDF.schema != targetDF.schema)
       {
-        println("Column names were different in source and target!!!")
-        throw new Exception("Column Names Did Not Match")
+        print("Column schema are different in source and target!!!")
+        throw new Exception("Column schema Did Not Match")
       }
       // Make sure that schema of both DataFrames are same
-      else if (sourceDF.schema != targetDF.schema)
+      else if (!sourceDF.columns.sameElements(targetDF.columns))
       {
-        print("Column schema count are different in source and target!!!")
-        throw new Exception("Column Count Did Not Match")
+        println("Column names anc count were different in source and target!!!")
+        throw new Exception("Column count and column name Did Not Match")
       }
     }
 
-    catch
-    {
-      case _: Throwable => println("Got some other kind of exception")
-      case _: Throwable => println("exception ignored")
+    catch {
+      case ex: Exception => println(s"Found a unknown exception: $ex")
+        System.exit(0)
+      case e: AnalysisException => println(e)
     }
 
     try {
@@ -85,6 +87,7 @@ class CompareTwoDF {
 
         return resultDF
     }
+
   }
 
   /**
