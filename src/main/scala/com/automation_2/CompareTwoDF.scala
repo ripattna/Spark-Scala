@@ -1,13 +1,9 @@
 package com.automation_2
 
-
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import org.apache.spark.sql.functions._
-
-import scala.util.Failure
-
 
 /**
  * Contains comparison related operations
