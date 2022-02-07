@@ -24,8 +24,10 @@ class CompareTwoDF {
    * @return a DataFrame
    */
   def readFile(fileFormat: String, fileLocation: String): DataFrame ={
-    val df = spark.read.option("header", "true").option("inferSchema", "true").format(fileFormat).load(fileLocation)
-    return df
+    spark.read.option("header", "true")
+      .option("inferSchema", "true")
+      .format(fileFormat)
+      .load(fileLocation)
   }
 
   /**

@@ -27,8 +27,11 @@ class CompareTwoData {
    * @return a DataFrame
    */
   def readFile(fileFormat: String, fileLocation: String): DataFrame ={
-    val df = spark.read.option("header", "true").option("inferSchema", "true").format(fileFormat).load(fileLocation)
-    return df
+    spark.read.option("header", "true")
+      .option("inferSchema", "true")
+      .format(fileFormat)
+      .load(fileLocation)
+
   }
 
   /**
@@ -41,7 +44,7 @@ class CompareTwoData {
    * @param columns
    * @return  DataFrame
    */
-  def compareResult(sourceDF: DataFrame, targetDF: DataFrame, primaryKey: List[String],  columns: List[String]): DataFrame = {
+  def compareResult(sourceDF: DataFrame,targetDF: DataFrame,primaryKey: List[String],columns: List[String]): DataFrame={
     try {
       // Make sure that column names match in both DataFrames
       if (sourceDF.schema != targetDF.schema)
@@ -64,6 +67,19 @@ class CompareTwoData {
     }
 
     try {
+
+      /*
+      val sourceCols = sourceDF.columns.mkString(",")
+      val targetCols = targetDF.columns.mkString(",")
+      println(sourceCols)
+      println(targetCols)
+
+       */
+
+      println(columns)
+      val m_columns = columns.map(x =>  ("M_" + x))
+      println(m_columns)
+
       // Joining two DataFrames based on PrimaryKey
       val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
 
@@ -94,38 +110,39 @@ class CompareTwoData {
        * //val res = compResult.select(compResult.columns.filter(_.startsWith("M_")).map(compResult(_)):_*)
        * //val source = compResult.select(sourceDF.columns.map(x => sourceDF(x)): _*)
        * //val rf = compResult.filter(col("sourceDF.*").notEqual("") && col("group").notEqual(""))
-       * // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
+       * // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.
+       * col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
        */
 
     }
 
   }
-    /**
-     * Can compare two files whether S3 , HDFS , local file system
-     * This method return the matching records in both of the source and target datasets
-     *
-     * @param sourceDF
-     * @param targetDF
-     * @return DataFrame
-     */
-    def matchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame = {
-      val matchRes = sourceDF.intersect(targetDF)
-      matchRes
-    }
+  /**
+   * Can compare two files whether S3 , HDFS , local file system
+   * This method return the matching records in both of the source and target datasets
+   *
+   * @param sourceDF
+   * @param targetDF
+   * @return DataFrame
+   */
+  def matchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame = {
+    val matchRes = sourceDF.intersect(targetDF)
+    matchRes
+  }
 
-    /**
-     * Can compare two files whether S3 , HDFS , local file system
-     * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
-     * For S3 location, "s3n://myBucket/myFile1.csv"
-     *
-     * @param sourceDF
-     * @param targetDF
-     * @return DataFrame
-     */
-    def mismatchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame = {
-      val mismatchSourceDF = sourceDF.exceptAll(targetDF).toDF()
-      return mismatchSourceDF
-    }
+  /**
+   * Can compare two files whether S3 , HDFS , local file system
+   * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
+   * For S3 location, "s3n://myBucket/myFile1.csv"
+   *
+   * @param sourceDF
+   * @param targetDF
+   * @return DataFrame
+   */
+  def mismatchRecords(sourceDF: DataFrame, targetDF: DataFrame): DataFrame = {
+    val mismatchSourceDF = sourceDF.exceptAll(targetDF).toDF()
+    return mismatchSourceDF
+  }
 
 }
 
@@ -155,11 +172,13 @@ object CompareTwoDataObject {
     val schemaSchemaList = sourceDF.columns.toList
     // Columns to select after ignoring Primary Key
     val columnToSelect = schemaSchemaList diff primaryKeyList
+    //println(columnToSelect)
 
     println("Compare DataFrame:")
     val comRes = new CompareTwoData().compareResult(sourceDF, targetDF, primaryKeyList, columnToSelect)
     comRes.show(false)
 
+    /*
     println("Matching Records:")
     val matchRes = new CompareTwoData().matchRecords(sourceDF, targetDF)
     matchRes.show()
@@ -171,6 +190,8 @@ object CompareTwoDataObject {
     println("Mismatch Rows in Target:")
     val targetMismatchRecords = new CompareTwoData().mismatchRecords(targetDF, sourceDF)
     targetMismatchRecords.show()
+
+     */
 
   }
 }
