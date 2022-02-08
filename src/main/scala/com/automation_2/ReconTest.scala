@@ -1,16 +1,17 @@
-package com.automation
+package com.automation_2
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.sql.functions.{col, collect_list, concat_ws, monotonically_increasing_id, sum}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
-class ReconAutomation{
+class ReconTest{
 
   // Spark Session
   val spark = SparkSession.builder()
     .master("local")
-    .appName("ReconAutomation")
+    .appName("ReconTest")
     .getOrCreate()
   spark.sparkContext.setLogLevel("ERROR")
 
@@ -82,14 +83,15 @@ class ReconAutomation{
       .withColumnRenamed("col0", pivotCol)
     transposeDF
   }
+
 }
 
-object ReconAutomationObject {
+object ReconTestObject {
 
   def main(args:Array[String]){
 
     // Reading the conf file
-    val applicationConf: Config = ConfigFactory.load("Config/application.conf")
+    val applicationConf: Config = ConfigFactory.load("application.conf")
 
     // Reading the source and target file from config
     val sourcePath: String = applicationConf.getString("filePath.sourceFile")
@@ -101,10 +103,10 @@ object ReconAutomationObject {
     // Reading the PrimaryKey from config
     val primaryKeyList = applicationConf.getStringList("primaryKey.primaryKeyValue").toList
 
-    val sourceDF = new ReconAutomation().readFile(fileType, sourcePath)
+    val sourceDF = new ReconTest().readFile(fileType, sourcePath)
     println("Source Data:")
     sourceDF.show()
-    val targetDF = new ReconAutomation().readFile(fileType, targetPath)
+    val targetDF = new ReconTest().readFile(fileType, targetPath)
     println("Target Data:")
     targetDF.show()
 
@@ -116,47 +118,47 @@ object ReconAutomationObject {
     val columnToSelect = schemaSchemaList diff primaryKeyList
     // println(columnToSelect)
 
-    val sourceRowCount = new ReconAutomation().rowsCount(sourceDF, columnToSelect)
-    // sourceRowCount.show()
+    val sourceRowCount = new ReconTest().rowsCount(sourceDF, columnToSelect)
+    sourceRowCount.show()
 
-    val targetRowCount = new ReconAutomation().rowsCount(targetDF, columnToSelect)
-    // targetRowCount.show()
+    val targetRowCount = new ReconTest().rowsCount(targetDF, columnToSelect)
+    targetRowCount.show()
 
     // Overlap Records
-    val overlapRowCount = new ReconAutomation()
+    val overlapRowCount = new ReconTest()
       .joinDF("inner", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // overlapRowCount.show()
 
     // Extra Records in Source
-    val extraSourceRowCount = new ReconAutomation()
+    val extraSourceRowCount = new ReconTest()
       .joinDF("left_anti", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // extraSourceRowCount.show()
 
     // Extra Records in Target
-    val extraTargetRowCount = new ReconAutomation()
+    val extraTargetRowCount = new ReconTest()
       .joinDF("left_anti",  columnToSelect, targetDF, sourceDF, primaryKeyList)
     // extraTargetRowCount.show()
 
     // Transpose the result
-    val sourceRowsCount = new ReconAutomation()
+    val sourceRowsCount = new ReconTest()
       .TransposeDF(sourceRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Source_Rec_Count")
+      .withColumnRenamed("0","No_Of_Rec_Source")
 
-    val targetRowsCount = new ReconAutomation()
+    val targetRowsCount = new ReconTest()
       .TransposeDF(targetRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Target_Rec_Count")
+      .withColumnRenamed("0","No_Of_Rec_Target")
 
-    val overlapRowsCount = new ReconAutomation()
+    val overlapRowsCount = new ReconTest()
       .TransposeDF(overlapRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Overlap_Rec_Count")
+      .withColumnRenamed("0","Overlap_Count")
 
-    val extraSourceRowsCount = new ReconAutomation()
+    val extraSourceRowsCount = new ReconTest()
       .TransposeDF(extraSourceRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Source_Extra_Rec_Count")
+      .withColumnRenamed("0","Extra_Rec_Source")
 
-    val extraTargetRowsCount = new ReconAutomation()
+    val extraTargetRowsCount = new ReconTest()
       .TransposeDF(extraTargetRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Target_Extra_Rec_Count")
+      .withColumnRenamed("0","Extra_Rec_Target")
 
     // Final Result DF
     val finalDF = sourceRowsCount
