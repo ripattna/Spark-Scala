@@ -71,9 +71,6 @@ class CompareTwoData {
       /*
       val sourceCols = sourceDF.columns.mkString(",")
       val targetCols = targetDF.columns.mkString(",")
-      println(sourceCols)
-      println(targetCols)
-
        */
 
       println(columns)
@@ -83,7 +80,7 @@ class CompareTwoData {
       // Joining two DataFrames based on PrimaryKey
       val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
 
-      // Doing column level comparison and assigning "Y" if the source and target column are matching else assigning "N" using WithColumn
+      // Column level comparison and assigning "Y" if the source and target column are matching else assigning "N"
       val compResult = columns.foldLeft(joinResult) { (df, name) =>
         df.withColumn("M_" + name, when(col("sourceDF." + name) === col("targetDF." + name),
           lit("Y")).otherwise(lit("N")))
