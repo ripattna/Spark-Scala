@@ -36,7 +36,6 @@ class ReconAutomation{
    * @param column of the source/target to be compare
    * @return  DataFrame
    */
-
   def rowsCount(df: DataFrame, column: List[String]): DataFrame = {
     val newDF = df.groupBy().sum(column: _*)
     val colRegex = raw"^.+\((.*?)\)".r
@@ -46,6 +45,7 @@ class ReconAutomation{
       .withColumn("Column_Name", monotonically_increasing_id())
     resultDF
   }
+
   /**
    * Will join source and target dataframe inorder to get the extra records in source and target
    * @param joinType type of the join(left_anti)
