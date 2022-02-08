@@ -141,23 +141,23 @@ object ReconAutomationObject {
     // Transpose the result
     val sourceRowsCount = new ReconAutomation()
       .TransposeDF(sourceRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","No_Of_Rec_Source")
+      .withColumnRenamed("0","Source_Rec_Count")
 
     val targetRowsCount = new ReconAutomation()
       .TransposeDF(targetRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","No_Of_Rec_Target")
+      .withColumnRenamed("0","Target_Rec_Count")
 
     val overlapRowsCount = new ReconAutomation()
       .TransposeDF(overlapRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Overlap_Count")
+      .withColumnRenamed("0","Overlap_Rec_Count")
 
     val extraSourceRowsCount = new ReconAutomation()
       .TransposeDF(extraSourceRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Extra_Rec_Source")
+      .withColumnRenamed("0","Source_Extra_Rec_Count")
 
     val extraTargetRowsCount = new ReconAutomation()
       .TransposeDF(extraTargetRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Extra_Rec_Target")
+      .withColumnRenamed("0","Target_Extra_Rec_Count")
 
     // Final Result DF
     val finalDF = sourceRowsCount
