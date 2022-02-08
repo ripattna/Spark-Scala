@@ -1,9 +1,8 @@
 package com.automationn
 
-import com.typesafe.config.{Config, ConfigFactory}
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
-
+import com.typesafe.config.{Config, ConfigFactory}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 class ReconTest{
@@ -24,11 +23,30 @@ class ReconTest{
    * @return  DataFrame
    */
   // Read the source and target file
-  def readFile(fileFormat: String, filePath: String): DataFrame = {
-    spark.read.option("header", "true")
-      .option("inferSchema", "true")
-      .format(fileFormat)
-      .load(filePath)
+  def readFile(fileType: String, fileFormat: String, filePath: String): DataFrame = {
+
+    if (fileType == "file") {
+      spark.read.option("header", "true")
+        .option("inferSchema", "true")
+        .format(fileFormat)
+        .load(filePath)
+    }
+
+    else if (fileType == "database") {
+      val database = "demo"
+      val table = "employee"
+      val user = "root"
+      val password = "root"
+      val driverName = "com.mysql.cj.jdbc.Driver"
+      val connString = "jdbc:mysql://localhost:3306/" + database
+
+      spark.read.format("jdbc").option("url", connString).option("driver", driverName)
+        .option("dbtable", table).option("user", user).option("password", password).load()
+    }
+
+    else {
+      spark.read.format("jdbc").load()
+    }
   }
 
   /**
@@ -98,15 +116,16 @@ object ReconTestObject {
     val targetPath: String = applicationConf.getString("filePath.targetFile")
 
     // Reading the file format from config
-    val fileType: String = applicationConf.getString("fileFormat.fileType")
+    val fileFormat: String = applicationConf.getString("fileDetails.fileFormat")
+    val fileType: String = applicationConf.getString("fileDetails.fileType")
 
     // Reading the PrimaryKey from config
     val primaryKeyList = applicationConf.getStringList("primaryKey.primaryKeyValue").toList
 
-    val sourceDF = new ReconTest().readFile(fileType, sourcePath)
+    val sourceDF = new ReconTest().readFile(fileType,fileFormat, sourcePath)
     println("Source Data:")
     sourceDF.show()
-    val targetDF = new ReconTest().readFile(fileType, targetPath)
+    val targetDF = new ReconTest().readFile(fileType,fileFormat, targetPath)
     println("Target Data:")
     targetDF.show()
 
