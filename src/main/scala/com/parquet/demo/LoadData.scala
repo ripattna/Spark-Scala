@@ -1,4 +1,4 @@
-package com.demo
+package com.parquet.demo
 
 import org.apache.spark.{SparkConf, SparkContext}
 

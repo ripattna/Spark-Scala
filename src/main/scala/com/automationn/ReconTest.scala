@@ -1,4 +1,4 @@
-package com.automation_2
+package com.automationn
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions._
