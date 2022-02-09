@@ -9,7 +9,7 @@ object mysqlConnect {
     val spark = SparkSession.builder().appName("mysqlConnect").master("local").getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
 
-    //Database property
+    // Database property
     val database = "demo"
     val table = "employee"
     val user = "rissan"
@@ -19,7 +19,7 @@ object mysqlConnect {
     // Connecting to mysql using JDBC connection
     val jdbcDF = spark.read.format("jdbc").option("url", connString).option("driver", "com.mysql.cj.jdbc.Driver")
       .option("dbtable", table).option("user", user).option("password", password).load()
-    jdbcDF.show()
+    jdbcDF.show(5)
 
     // Writing the Dataframe to HIVE table
     jdbcDF.write.saveAsTable("default.employee")
@@ -28,5 +28,4 @@ object mysqlConnect {
     spark.sql("select * from default.employee").show()
 
   }
-
 }
