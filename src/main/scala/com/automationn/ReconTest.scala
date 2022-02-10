@@ -18,21 +18,21 @@ class ReconTest{
    * Read two source and target files, whether in S3 , HDFS , local file system
    * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
    * For S3 location, "s3n://myBucket/myFile1.csv"
-   * @param fileFormat could be parquet,csv,json  etc
+   * @param fileType could be parquet,csv,json  etc
    * @param filePath where the file reside in any of the storage
    * @return  DataFrame
    */
   // Read the source and target file
-  def readFile(fileType: String, fileFormat: String, filePath: String): DataFrame = {
+  def readFile(readType: String, fileType: String, filePath: String): DataFrame = {
 
-    if (fileType == "file") {
+    if (readType == "file") {
       spark.read.option("header", "true")
         .option("inferSchema", "true")
-        .format(fileFormat)
+        .format(fileType)
         .load(filePath)
     }
 
-    else if (fileType == "database") {
+    else if (readType == "database") {
       val database = "demo"
       val table = "employee"
       val user = "root"
@@ -109,23 +109,23 @@ object ReconTestObject {
   def main(args:Array[String]){
 
     // Reading the conf file
-    val applicationConf: Config = ConfigFactory.load("application.conf")
-
-    // Reading the source and target file from config
-    val sourcePath: String = applicationConf.getString("filePath.sourceFile")
-    val targetPath: String = applicationConf.getString("filePath.targetFile")
+    val config: Config = ConfigFactory.load("config.conf")
 
     // Reading the file format from config
-    val fileFormat: String = applicationConf.getString("fileDetails.fileFormat")
-    val fileType: String = applicationConf.getString("fileDetails.fileType")
+    val readType: String = config.getString("readType")
+    val fileType: String = config.getString("fileDetails.fileType")
+
+    // Reading the source and target file from config
+    val sourcePath: String = config.getString("fileDetails.sourceFile")
+    val targetPath: String = config.getString("fileDetails.targetFile")
 
     // Reading the PrimaryKey from config
-    val primaryKeyList = applicationConf.getStringList("primaryKey.primaryKeyValue").toList
+    val primaryKeyList = config.getStringList("primaryKey.primaryKeyValue").toList
 
-    val sourceDF = new ReconTest().readFile(fileType,fileFormat, sourcePath)
+    val sourceDF = new ReconTest().readFile(readType,fileType, sourcePath)
     println("Source Data:")
     sourceDF.show()
-    val targetDF = new ReconTest().readFile(fileType,fileFormat, targetPath)
+    val targetDF = new ReconTest().readFile(readType,fileType, targetPath)
     println("Target Data:")
     targetDF.show()
 

@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 class Step {
 
   // Reading the conf file
-  val applicationConf: Config = ConfigFactory.load("application.conf")
+  val applicationConf: Config = ConfigFactory.load("config.conf")
 
   // Reading the Spark Environment
   val masterEnv: String = applicationConf.getString("sparkEnvironment.master")
