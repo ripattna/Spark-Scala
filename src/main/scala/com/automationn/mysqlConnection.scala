@@ -44,6 +44,14 @@ class mysqlConnection {
     }
   }
 
+  def totalRecordCount(df: DataFrame): Long = {
+
+  val dataframe = df.count()
+
+    return dataframe
+
+  }
+
 }
 
 object mysqlConnectionObject {
@@ -79,6 +87,12 @@ object mysqlConnectionObject {
     val targetDF = new mysqlConnection().readFile(readType, fileType, targetPath, connString, driverName, database, table, user, password)
     println("Target Data:")
     targetDF.show()
+
+    val sourceTotalRecCount = new mysqlConnection().totalRecordCount(sourceDF)
+    println(sourceTotalRecCount)
+
+    val targetTotalRecCount = new mysqlConnection().totalRecordCount(targetDF)
+    println(targetTotalRecCount)
 
   }
 }

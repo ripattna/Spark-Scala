@@ -82,7 +82,7 @@ object SampleValidation {
     // extraSourceRowCount.show()
 
     def extraRecordTarget(joinType: String): DataFrame ={
-      var extraTargetResultSet = columnToSelect.map( i => (targetDF.join(sourceDF, Seq(primaryKeyListString, i), joinType).agg(sum(i).as(i))
+      val extraTargetResultSet = columnToSelect.map( i => (targetDF.join(sourceDF, Seq(primaryKeyListString, i), joinType).agg(sum(i).as(i))
         .na.fill(0)
         .withColumn("Column_Name", monotonically_increasing_id())))
         .reduce((x, y) => x.join(y,"Column_Name"))
