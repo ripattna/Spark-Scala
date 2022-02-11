@@ -48,7 +48,8 @@ class mysqlConnection {
 
   /**
    * Will return the dataframe record count
-   * @param df record count
+   * @param sourceDF record count
+   * @param targetDF record count
    * @return  DataFrame
    */
   def totalRecordCount(sourceDF: DataFrame, targetDF: DataFrame, alias: String): DataFrame = {
@@ -57,7 +58,7 @@ class mysqlConnection {
       // Make sure that column names match in both DataFrames
       if (sourceDF.schema != targetDF.schema)
       {
-        print("Column schema are different in source and target!!!")
+        print("Column schema are different in source and target!")
         throw new Exception("Column schema Did Not Match")
       }
       // Make sure that schema of both DataFrames are same
