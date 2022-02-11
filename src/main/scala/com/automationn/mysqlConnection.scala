@@ -2,8 +2,7 @@ package com.automationn
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions.{col, collect_list, concat_ws, count, monotonically_increasing_id}
-import org.apache.spark.sql.{DataFrame, SparkSession}
-
+import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 
@@ -52,11 +51,33 @@ class mysqlConnection {
    * @param df record count
    * @return  DataFrame
    */
-  def totalRecordCount(df: DataFrame, alias: String): DataFrame = {
+  def totalRecordCount(sourceDF: DataFrame, targetDF: DataFrame, alias: String): DataFrame = {
 
-    df.agg(count("*").as(alias))
-      .withColumn("Column_Name", monotonically_increasing_id())
+    try {
+      // Make sure that column names match in both DataFrames
+      if (sourceDF.schema != targetDF.schema)
+      {
+        print("Column schema are different in source and target!!!")
+        throw new Exception("Column schema Did Not Match")
+      }
+      // Make sure that schema of both DataFrames are same
+      else if (!sourceDF.columns.sameElements(targetDF.columns))
+      {
+        println("Column names anc count were different in source and target!!!")
+        throw new Exception("Column count and column name Did Not Match")
+      }
+    }
 
+    catch {
+      case ex: Exception => println(s"Found a unknown exception: $ex")
+        System.exit(0)
+      case e: AnalysisException => println(e)
+    }
+
+    try{
+      sourceDF.agg(count("*").as(alias))
+        .withColumn("Column_Name", monotonically_increasing_id())
+    }
   }
 
   /**
@@ -67,30 +88,12 @@ class mysqlConnection {
    * @param schemaSchemaList
    * @return  DataFrame
    */
-  def joinDF(sourceDF: DataFrame,targetDF: DataFrame,
-             schemaSchemaList: List[String], joinType: String, alias: String): DataFrame = {
+  def joinDF(sourceDF: DataFrame,targetDF: DataFrame, schemaSchemaList: List[String],
+             joinType: String, alias: String): DataFrame = {
 
      sourceDF.join(targetDF, schemaSchemaList, joinType)
        .agg(count("*").as(alias))
        .withColumn("Column_Name", monotonically_increasing_id())
-  }
-
-  /**
-   * Will method will transpose the dataframe
-   * @param df
-   * @param columns of the the source/target dataframe excluding the primary key
-   * @param pivotCol sourceDF
-   * @return  DataFrame
-   */
-  def TransposeDF(df: DataFrame, schemaSchemaList: Seq[String], pivotCol: String): DataFrame = {
-    val columnsValue = schemaSchemaList.map(x => "'" + x + "', " + x)
-    val stackCols = columnsValue.mkString(",")
-    val df_1 = df.selectExpr(pivotCol, "stack(" + schemaSchemaList.size + "," + stackCols + ")")
-      .select(pivotCol, "col0", "col1")
-    val transposeDF = df_1.groupBy(col("col0")).pivot(pivotCol)
-      .agg(concat_ws("", collect_list(col("col1"))))
-      .withColumnRenamed("col0", pivotCol)
-    transposeDF
   }
 
 }
@@ -142,54 +145,25 @@ object mysqlConnectionObject {
     // Columns to select after ignoring Primary Key
     val columnToSelect = schemaSchemaList diff primaryKeyList
 
-    val sourceRowCount = new mysqlConnection().totalRecordCount(sourceDF, "Source_Rec_Count")
-    sourceRowCount.show()
-    val targetRowCount = new mysqlConnection().totalRecordCount(targetDF, "Target_Rec_Count")
-    targetRowCount.show()
+    val sourceRecCount = new mysqlConnection().totalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
+    val targetRecCount = new mysqlConnection().totalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
 
-    val overlapRowCount = new mysqlConnection().joinDF(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
-    overlapRowCount.show()
+    val overlapRecCount = new mysqlConnection().joinDF(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
 
     // Extra Records in Source
-    val extraSourceRowCount = new mysqlConnection()
+    val extraSourceRecCount = new mysqlConnection()
       .joinDF(sourceDF, targetDF, schemaSchemaList, "left_anti", "Source_Extra_Rec_Count")
-    extraSourceRowCount.show()
 
     // Extra Records in Target
-    val extraTargetRowCount = new mysqlConnection()
+    val extraTargetRecCount = new mysqlConnection()
       .joinDF(targetDF, sourceDF, schemaSchemaList, "left_anti","Target_Extra_Rec_Count" )
-    extraTargetRowCount.show()
 
-    // Transpose the result
-    val sourceRowsCount = new mysqlConnection()
-      .TransposeDF(sourceRowCount, schemaSchemaList, "Column_Name")
-      .withColumnRenamed("0","Source_Rec_Count")
-    sourceRowCount.show()
-
-    val targetRowsCount = new mysqlConnection()
-      .TransposeDF(targetRowCount, schemaSchemaList, "Column_Name")
-      .withColumnRenamed("0","Target_Rec_Count")
-
-    val overlapRowsCount = new mysqlConnection()
-      .TransposeDF(overlapRowCount, schemaSchemaList, "Column_Name")
-      .withColumnRenamed("0","Overlap_Rec_Count")
-
-    val extraSourceRowsCount = new mysqlConnection()
-      .TransposeDF(extraSourceRowCount, schemaSchemaList, "Column_Name")
-      .withColumnRenamed("0","Source_Extra_Rec_Count")
-
-    val extraTargetRowsCount = new mysqlConnection()
-      .TransposeDF(extraTargetRowCount, schemaSchemaList, "Column_Name")
-      .withColumnRenamed("0","Target_Extra_Rec_Count")
-
-    // Final Result DF
-    val finalDF = sourceRowsCount
-      .join(targetRowsCount, Seq("Column_Name"),"inner")
-      .join(overlapRowsCount, Seq("Column_Name"),"inner")
-      .join(extraSourceRowsCount, Seq("Column_Name"),"inner")
-      .join(extraTargetRowsCount, Seq("Column_Name"),"inner")
-    finalDF.show()
-
+    val joinResult = sourceRecCount
+      .join(targetRecCount, Seq("Column_Name"),"inner")
+      .join(overlapRecCount, Seq("Column_Name"),"inner")
+      .join(extraSourceRecCount, Seq("Column_Name"),"inner")
+      .join(extraTargetRecCount, Seq("Column_Name"),"inner").drop("Column_Name")
+    joinResult.show()
 
   }
 }
