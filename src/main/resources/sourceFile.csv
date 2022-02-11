@@ -1,6 +1,6 @@
-Customer_Id,Product,Country,Quantity,Product_ID
-101,1,1,200,10
-102,2,2,100,11
-103,3,3,250,11
-104,3,3,400,13
-105,4,4,500,14
+Customer_Id,Product,Country,Quantity
+101,1,1,200
+102,2,2,100
+103,3,3,250
+104,3,3,400
+105,4,4,500
