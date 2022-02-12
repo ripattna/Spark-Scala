@@ -92,7 +92,7 @@ class mysqlConnection {
   def joinDF(sourceDF: DataFrame,targetDF: DataFrame, schemaSchemaList: List[String],
              joinType: String, alias: String): DataFrame = {
 
-     sourceDF.join(targetDF, schemaSchemaList, joinType)
+     sourceDF.na.fill(0).join(targetDF.na.fill(0), schemaSchemaList, joinType)
        .agg(count("*").as(alias))
        .withColumn("Column_Name", monotonically_increasing_id())
   }
