@@ -15,7 +15,6 @@ class mysqlConnection {
     .getOrCreate()
   spark.sparkContext.setLogLevel("ERROR")
 
-
   /**
    * Read two source and target files, whether in S3 , HDFS , local file system
    * For example, for HDFS, "hdfs://nn1home:8020/input/war-peace.parquet"
