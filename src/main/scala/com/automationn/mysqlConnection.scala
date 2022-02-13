@@ -148,7 +148,9 @@ object mysqlConnectionObject {
     val sourceRecCount = new mysqlConnection().totalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
     val targetRecCount = new mysqlConnection().totalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
 
-    val overlapRecCount = new mysqlConnection().joinDF(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
+    // Overlap Record
+    val overlapRecCount = new mysqlConnection()
+      .joinDF(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
 
     // Extra Records in Source
     val extraSourceRecCount = new mysqlConnection()
