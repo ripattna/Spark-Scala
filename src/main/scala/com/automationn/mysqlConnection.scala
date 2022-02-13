@@ -34,8 +34,8 @@ class mysqlConnection {
 
     else if (readType == "database") {
       try {
-        spark.read.format("jdbc").option("url", connString).option("driver", driverName).option("dbtable", table)
-        .option("user", user).option("password", password).load()
+        spark.read.format("jdbc").option("url", connString).option("driver", driverName)
+          .option("dbtable", table).option("user", user).option("password", password).load()
       }
 
     }
