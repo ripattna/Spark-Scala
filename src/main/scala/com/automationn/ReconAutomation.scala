@@ -6,7 +6,7 @@ import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 
-class mysqlConnection {
+class ReconAutomation {
 
   // Spark Session
   val spark = SparkSession.builder()
@@ -98,7 +98,7 @@ class mysqlConnection {
 
 }
 
-object mysqlConnectionObject {
+object ReconAutomationObject {
 
   def main(args: Array[String]): Unit = {
 
@@ -131,11 +131,11 @@ object mysqlConnectionObject {
      * Now calling the method which is available in mysqlConnection class
      **/
 
-    val sourceDF = new mysqlConnection().readFile(readType, fileType, sourcePath, connString, driverName, database, table, user, password)
+    val sourceDF = new ReconAutomation().readFile(readType, fileType, sourcePath, connString, driverName, database, table, user, password)
     println("Source Data:")
     sourceDF.show()
 
-    val targetDF = new mysqlConnection().readFile(readType, fileType, targetPath, connString, driverName, database, table, user, password)
+    val targetDF = new ReconAutomation().readFile(readType, fileType, targetPath, connString, driverName, database, table, user, password)
     println("Target Data:")
     targetDF.show()
 
@@ -145,19 +145,19 @@ object mysqlConnectionObject {
     // Columns to select after ignoring Primary Key
     val columnToSelect = schemaSchemaList diff primaryKeyList
 
-    val sourceRecCount = new mysqlConnection().totalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
-    val targetRecCount = new mysqlConnection().totalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
+    val sourceRecCount = new ReconAutomation().totalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
+    val targetRecCount = new ReconAutomation().totalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
 
     // Overlap Record
-    val overlapRecCount = new mysqlConnection()
+    val overlapRecCount = new ReconAutomation()
       .joinDF(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
 
     // Extra Records in Source
-    val extraSourceRecCount = new mysqlConnection()
+    val extraSourceRecCount = new ReconAutomation()
       .joinDF(sourceDF, targetDF, schemaSchemaList, "left_anti", "Source_Extra_Rec_Count")
 
     // Extra Records in Target
-    val extraTargetRecCount = new mysqlConnection()
+    val extraTargetRecCount = new ReconAutomation()
       .joinDF(targetDF, sourceDF, schemaSchemaList, "left_anti","Target_Extra_Rec_Count" )
 
     val joinResult = sourceRecCount
