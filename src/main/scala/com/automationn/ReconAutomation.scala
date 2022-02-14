@@ -1,7 +1,8 @@
 package com.automationn
 
+import java.io.{FileNotFoundException, IOException}
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.sql.functions.{count, monotonically_increasing_id}
+import org.apache.spark.sql.functions.{col, count, monotonically_increasing_id}
 import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
@@ -29,17 +30,15 @@ class ReconAutomation {
     if (readType == "file") {
       try {
         spark.read.option("header", "true").option("inferSchema", "true").format(fileType).load(filePath)
+        //throw new FileNotFoundException(s"File not found in: $filePath")
       }
     }
-
     else if (readType == "database") {
       try {
         spark.read.format("jdbc").option("url", connString).option("driver", driverName)
           .option("dbtable", table).option("user", user).option("password", password).load()
       }
-
     }
-
     else {
       spark.read.format("").load()
     }
@@ -54,20 +53,13 @@ class ReconAutomation {
   def totalRecordCount(sourceDF: DataFrame, targetDF: DataFrame, alias: String): DataFrame = {
 
     try {
-      // Make sure that column names match in both DataFrames
-      if (sourceDF.schema != targetDF.schema)
+      // Make sure that column name and column count are same
+     if (!sourceDF.columns.sameElements(targetDF.columns))
       {
-        print("Column schema are different in source and target!")
-        throw new Exception("Column schema Did Not Match")
-      }
-      // Make sure that schema of both DataFrames are same
-      else if (!sourceDF.columns.sameElements(targetDF.columns))
-      {
-        println("Column names anc count were different in source and target!!!")
-        throw new Exception("Column count and column name Did Not Match")
+        println("Column names and count were different in source and target!")
+        throw new Exception("Column count or column name didn't match!")
       }
     }
-
     catch {
       case ex: Exception => println(s"Found a unknown exception: $ex")
         System.exit(0)
@@ -94,6 +86,22 @@ class ReconAutomation {
      sourceDF.na.fill(0).join(targetDF.na.fill(0), schemaSchemaList, joinType)
        .agg(count("*").as(alias))
        .withColumn("Column_Name", monotonically_increasing_id())
+  }
+
+  /**
+   * Will calculate the number of records in source and target
+   * @param df sourceDataFrame which have to compare with targetDataFrame
+   * @param column of the source/target to be compare
+   * @return  DataFrame
+   */
+  def rowsCount(dataframe: DataFrame, column: List[String]): DataFrame = {
+    val newDF = dataframe.groupBy().sum(column: _*)
+    val colRegex = raw"^.+\((.*?)\)".r
+    val newCols = newDF.columns.map(x => col(x).as(colRegex.replaceAllIn(x, m => m.group(1))))
+    val resultDF = newDF.select(newCols: _*)
+      .na.fill(0)
+      .withColumn("Column_Name", monotonically_increasing_id())
+    resultDF
   }
 
 }
@@ -168,6 +176,12 @@ object ReconAutomationObject {
       .join(extraSourceRecCount, Seq("Column_Name"),"inner")
       .join(extraTargetRecCount, Seq("Column_Name"),"inner").drop("Column_Name")
     joinResult.show()
+
+    val sourceRowCount = new ReconAutomation().rowsCount(sourceDF, columnToSelect)
+    sourceRowCount.show()
+
+    val targetRowCount = new ReconAutomation().rowsCount(targetDF, columnToSelect)
+    targetRowCount.show()
 
   }
 }

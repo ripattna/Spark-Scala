@@ -1,0 +1,4 @@
+Customer_Id,Total_Sales,Revenue,Volume,Customer_Name,Category,Sales
+ABC,a,,0,XY,xx,1
+XYZ,b,1,,YZ,yy,1
+RST,c,0,,ZX,1,1
