@@ -23,7 +23,7 @@ class ReconAutomation {
    * @param filePath where the file reside in any of the storage
    * @return  DataFrame
    */
-  def readFile(readType: String, fileType: String, filePath: String, connString: String, driverName: String,
+  def readDataAndConvertToDataframe(readType: String, fileType: String, filePath: String, connString: String, driverName: String,
                database: String, table: String, user: String, password: String): DataFrame = {
 
     if (readType == "file") {
@@ -131,11 +131,13 @@ object ReconAutomationObject {
      * Now calling the method which is available in mysqlConnection class
      **/
 
-    val sourceDF = new ReconAutomation().readFile(readType, fileType, sourcePath, connString, driverName, database, table, user, password)
+    val sourceDF = new ReconAutomation().readDataAndConvertToDataframe(readType, fileType, sourcePath, connString,
+      driverName, database, table, user, password)
     println("Source Data:")
     sourceDF.show()
 
-    val targetDF = new ReconAutomation().readFile(readType, fileType, targetPath, connString, driverName, database, table, user, password)
+    val targetDF = new ReconAutomation().readDataAndConvertToDataframe(readType, fileType, targetPath, connString,
+      driverName, database, table, user, password)
     println("Target Data:")
     targetDF.show()
 
