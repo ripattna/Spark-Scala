@@ -3,7 +3,8 @@ package com.automationn
 import java.io.{FileNotFoundException, IOException}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions.{col, count, monotonically_increasing_id}
-import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
+import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession, functions}
+
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 
@@ -30,8 +31,8 @@ class ReconAutomation {
     if (readType == "file") {
       try {
         spark.read.option("header", "true").option("inferSchema", "true").format(fileType).load(filePath)
-        //throw new FileNotFoundException(s"File not found in: $filePath")
       }
+
     }
     else if (readType == "database") {
       try {
@@ -80,7 +81,7 @@ class ReconAutomation {
    * @param schemaSchemaList
    * @return  DataFrame
    */
-  def joinDF(sourceDF: DataFrame,targetDF: DataFrame, schemaSchemaList: List[String],
+  def joinDF(sourceDF: DataFrame, targetDF: DataFrame, schemaSchemaList: List[String],
              joinType: String, alias: String): DataFrame = {
 
      sourceDF.na.fill(0).join(targetDF.na.fill(0), schemaSchemaList, joinType)
@@ -94,8 +95,10 @@ class ReconAutomation {
    * @param column of the source/target to be compare
    * @return  DataFrame
    */
-  def rowsCount(dataframe: DataFrame, column: List[String]): DataFrame = {
-    val newDF = dataframe.groupBy().sum(column: _*)
+  def rowsCount(df: DataFrame, column: List[String]): DataFrame = {
+
+    //df.agg(count("*")).withColumn("Column_Name", monotonically_increasing_id())
+    val newDF = df.groupBy().sum(column: _*)
     val colRegex = raw"^.+\((.*?)\)".r
     val newCols = newDF.columns.map(x => col(x).as(colRegex.replaceAllIn(x, m => m.group(1))))
     val resultDF = newDF.select(newCols: _*)
@@ -103,7 +106,6 @@ class ReconAutomation {
       .withColumn("Column_Name", monotonically_increasing_id())
     resultDF
   }
-
 }
 
 object ReconAutomationObject {
