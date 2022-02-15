@@ -1,6 +1,5 @@
 package com.automationn
 
-import java.io.{FileNotFoundException, IOException}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions.{col, collect_list, concat_ws, count, monotonically_increasing_id, sum}
 import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession, functions}
@@ -269,8 +268,11 @@ object ReconAutomationObject {
     finalDF.show()
 
     // Write DataFrame data to CSV file
-    // finalDF.write.format("csv").option("header", true).mode("overwrite").save("/tmp/reconRes")
-
+    finalDF.write
+      .format("csv")
+      .option("header", true)
+      .mode("overwrite")
+      .save("/tmp/reconOutput")
 
   }
 }

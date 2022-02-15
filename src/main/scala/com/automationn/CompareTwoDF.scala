@@ -63,10 +63,20 @@ class CompareTwoDF {
     }
 
     try {
-        // Joining two DataFrames based on PrimaryKey
+
+      /*
+      val sourceCols = sourceDF.columns.mkString(",")
+      val targetCols = targetDF.columns.mkString(",")
+       */
+
+      println(columns)
+      val m_columns = columns.map(x =>  ("M_" + x))
+      println(m_columns)
+
+      // Joining two DataFrames based on PrimaryKey
         val joinResult = sourceDF.as("sourceDF").join(targetDF.as("targetDF"), primaryKey, "left")
 
-        // Doing column level comparison and assigning "Y" if the source and target column are matching else assigning "N" using WithColumn
+        // Column level comparison and assigning "Y" if the source and target column are matching else assigning "N" using WithColumn
         val compResult = columns.foldLeft(joinResult) { (df, name) =>
           df.withColumn("M_" + name,when(col("sourceDF." + name) === col("targetDF." + name),
             lit("Y")).otherwise(lit("N")))}
@@ -84,6 +94,16 @@ class CompareTwoDF {
           .select(col("sourceDF.*"), col("MATCHING"), col("MissMatch_Column"))
 
         return resultDF
+
+      /**
+       * //.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+       * //val res = compResult.select(compResult.columns.filter(_.startsWith("M_")).map(compResult(_)):_*)
+       * //val source = compResult.select(sourceDF.columns.map(x => sourceDF(x)): _*)
+       * //val rf = compResult.filter(col("sourceDF.*").notEqual("") && col("group").notEqual(""))
+       * // val compResult = columns.map(i => joinResult.withColumn((s"M_$i"), when(sourceDF.col((s"$i")) === targetDF.
+       * col((s"$i")), lit("Y")).otherwise(lit("N")))).reduce((x, y) => x.join(y,(primaryKey)))
+       */
+
     }
   }
 
