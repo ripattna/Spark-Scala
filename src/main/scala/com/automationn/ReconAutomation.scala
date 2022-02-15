@@ -2,7 +2,7 @@ package com.automationn
 
 import java.io.{FileNotFoundException, IOException}
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.sql.functions.{col, count, monotonically_increasing_id}
+import org.apache.spark.sql.functions.{col, count, monotonically_increasing_id, sum}
 import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession, functions}
 
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
@@ -97,15 +97,36 @@ class ReconAutomation {
    */
   def rowsCount(df: DataFrame, column: List[String]): DataFrame = {
 
-    //df.agg(count("*")).withColumn("Column_Name", monotonically_increasing_id())
-    val newDF = df.groupBy().sum(column: _*)
     val colRegex = raw"^.+\((.*?)\)".r
-    val newCols = newDF.columns.map(x => col(x).as(colRegex.replaceAllIn(x, m => m.group(1))))
-    val resultDF = newDF.select(newCols: _*)
+    val mapDF = column.map(_ -> "count").toMap
+    // val mapDF = df.columns.map(_ -> "count").toMap
+    val resDF = df.groupBy().agg(mapDF)
+    val newCols = resDF.columns.map(x => col(x).as(colRegex.replaceAllIn(x, m => m.group(1))))
+    val resultDF = resDF.select(newCols: _*)
       .na.fill(0)
       .withColumn("Column_Name", monotonically_increasing_id())
     resultDF
   }
+
+  /**
+   * Will join source and target dataframe inorder to get the extra records in source and target
+   * @param joinType type of the join(left_anti)
+   * @param columns of the the source/target dataframe excluding the primary key
+   * @param sourceDF sourceDF
+   * @param targetDF targetDF
+   * @param primaryKey PrimaryKey of the source & Target it could be more than 1
+   * @return  DataFrame
+   */
+  def joinDF(joinType: String, columns: List[String], sourceDF: DataFrame, targetDF: DataFrame
+             , primaryKey: List[String]): DataFrame = {
+
+    columns.map( i => sourceDF.join(targetDF, primaryKey:+i, joinType).agg(sum(i).as(i))
+      .na.fill(0)
+      .withColumn("Column_Name", monotonically_increasing_id()))
+      .reduce((x, y) => x.join(y,"Column_Name"))
+
+  }
+
 }
 
 object ReconAutomationObject {
