@@ -2,9 +2,8 @@ package com.automationn
 
 import java.io.{FileNotFoundException, IOException}
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.sql.functions.{col, count, monotonically_increasing_id, sum}
+import org.apache.spark.sql.functions.{col, collect_list, concat_ws, count, monotonically_increasing_id, sum}
 import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession, functions}
-
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 
@@ -117,13 +116,32 @@ class ReconAutomation {
    * @param primaryKey PrimaryKey of the source & Target it could be more than 1
    * @return  DataFrame
    */
-  def joinDF(joinType: String, columns: List[String], sourceDF: DataFrame, targetDF: DataFrame
-             , primaryKey: List[String]): DataFrame = {
+  def joinDFTo(joinType: String, columns: List[String], sourceDF: DataFrame, targetDF: DataFrame,
+               primaryKey: List[String]): DataFrame = {
 
-    columns.map( i => sourceDF.join(targetDF, primaryKey:+i, joinType).agg(sum(i).as(i))
+    columns.map( i => sourceDF.join(targetDF, primaryKey:+i, joinType).agg(count(i).as(i))
       .na.fill(0)
       .withColumn("Column_Name", monotonically_increasing_id()))
       .reduce((x, y) => x.join(y,"Column_Name"))
+  }
+
+  /**
+   * Will method will transpose the dataframe
+   * @param df
+   * @param columns of the the source/target dataframe excluding the primary key
+   * @param pivotCol sourceDF
+   * @return  DataFrame
+   */
+  def TransposeDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+
+    val columnsValue = columns.map(x => "'" + x + "', " + x)
+    val stackCols = columnsValue.mkString(",")
+    val df_1 = df.selectExpr(pivotCol, "stack(" + columns.size + "," + stackCols + ")")
+      .select(pivotCol, "col0", "col1")
+    val transposeDF = df_1.groupBy(col("col0")).pivot(pivotCol)
+      .agg(concat_ws("", collect_list(col("col1"))))
+      .withColumnRenamed("col0", pivotCol)
+    transposeDF
 
   }
 
@@ -201,10 +219,58 @@ object ReconAutomationObject {
     joinResult.show()
 
     val sourceRowCount = new ReconAutomation().rowsCount(sourceDF, columnToSelect)
-    sourceRowCount.show()
+    // sourceRowCount.show()
 
     val targetRowCount = new ReconAutomation().rowsCount(targetDF, columnToSelect)
-    targetRowCount.show()
+    // targetRowCount.show()
+
+    // Overlap Records
+    val overlapRowCount = new ReconAutomation()
+      .joinDFTo("inner", columnToSelect, sourceDF, targetDF, primaryKeyList)
+    // overlapRowCount.show()
+
+    // Extra Records in Source
+    val extraSourceRowCount = new ReconAutomation()
+      .joinDFTo("left_anti", columnToSelect, sourceDF, targetDF, primaryKeyList)
+    // extraSourceRowCount.show()
+
+    // Extra Records in Target
+    val extraTargetRowCount = new ReconAutomation()
+      .joinDFTo("left_anti",  columnToSelect, targetDF, sourceDF, primaryKeyList)
+    // extraTargetRowCount.show()
+
+    // Transpose the result
+    val sourceRowsCount = new ReconAutomation()
+      .TransposeDF(sourceRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0","Source_Rec_Count")
+
+    val targetRowsCount = new ReconAutomation()
+      .TransposeDF(targetRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0","Target_Rec_Count")
+
+    val overlapRowsCount = new ReconAutomation()
+      .TransposeDF(overlapRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0","Overlap_Rec_Count")
+
+    val extraSourceRowsCount = new ReconAutomation()
+      .TransposeDF(extraSourceRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0","Source_Extra_Rec_Count")
+
+    val extraTargetRowsCount = new ReconAutomation()
+      .TransposeDF(extraTargetRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0","Target_Extra_Rec_Count")
+
+    // Final Result DF
+    val finalDF = sourceRowsCount
+      .join(targetRowsCount, Seq("Column_Name"),"inner")
+      .join(overlapRowsCount, Seq("Column_Name"),"inner")
+      .join(extraSourceRowsCount, Seq("Column_Name"),"inner")
+      .join(extraTargetRowsCount, Seq("Column_Name"),"inner")
+    finalDF.show()
+
+    // Write DataFrame data to CSV file
+    // finalDF.write.format("csv").option("header", true).mode("overwrite").save("/tmp/reconRes")
+
 
   }
 }
