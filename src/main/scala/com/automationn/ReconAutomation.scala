@@ -1,8 +1,8 @@
 package com.automationn
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.sql.functions.{col, collect_list, concat_ws, count, monotonically_increasing_id, sum}
-import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession, functions}
+import org.apache.spark.sql.functions.{col, collect_list, concat_ws, count, monotonically_increasing_id}
+import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 
