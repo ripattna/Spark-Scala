@@ -1,4 +1,4 @@
-package com.automationn
+package com.automation
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions.{col, collect_list, concat_ws, count, monotonically_increasing_id}
@@ -23,14 +23,13 @@ class ReconAutomation {
    * @param filePath where the file reside in any of the storage
    * @return  DataFrame
    */
-  def readDataAndConvertToDataframe(readType: String, fileType: String, filePath: String, connString: String, driverName: String,
-               database: String, table: String, user: String, password: String): DataFrame = {
+  def readDataAndConvertToDataframe(readType: String,fileType: String,filePath: String,connString: String,
+                                    driverName: String,database: String,table: String,user: String,password: String): DataFrame = {
 
     if (readType == "file") {
       try {
         spark.read.option("header", "true").option("inferSchema", "true").format(fileType).load(filePath)
       }
-
     }
     else if (readType == "database") {
       try {
@@ -39,7 +38,7 @@ class ReconAutomation {
       }
     }
     else {
-      spark.read.format("").load()
+      spark.read.option("header", "true").option("inferSchema", "true").format(fileType).load(filePath)
     }
   }
 
@@ -49,11 +48,11 @@ class ReconAutomation {
    * @param targetDF record count
    * @return  DataFrame
    */
-  def totalRecordCount(sourceDF: DataFrame, targetDF: DataFrame, alias: String): DataFrame = {
+  def calculateTotalRecordCount(sourceDF: DataFrame, targetDF: DataFrame, alias: String): DataFrame = {
 
     try {
       // Make sure that column name and column count are same
-     if (!sourceDF.columns.sameElements(targetDF.columns))
+      if (!sourceDF.columns.sameElements(targetDF.columns))
       {
         println("Column names and count were different in source and target!")
         throw new Exception("Column count or column name didn't match!")
@@ -79,12 +78,12 @@ class ReconAutomation {
    * @param schemaSchemaList
    * @return  DataFrame
    */
-  def joinDF(sourceDF: DataFrame, targetDF: DataFrame, schemaSchemaList: List[String],
-             joinType: String, alias: String): DataFrame = {
+  def calculateJoinResult(sourceDF: DataFrame, targetDF: DataFrame, schemaSchemaList: List[String],
+                          joinType: String, alias: String): DataFrame = {
 
-     sourceDF.na.fill(0).join(targetDF.na.fill(0), schemaSchemaList, joinType)
-       .agg(count("*").as(alias))
-       .withColumn("Column_Name", monotonically_increasing_id())
+    sourceDF.na.fill(0).join(targetDF.na.fill(0), schemaSchemaList, joinType)
+      .agg(count("*").as(alias))
+      .withColumn("Column_Name", monotonically_increasing_id())
   }
 
   /**
@@ -93,7 +92,7 @@ class ReconAutomation {
    * @param column of the source/target to be compare
    * @return  DataFrame
    */
-  def rowsCount(df: DataFrame, column: List[String]): DataFrame = {
+  def calculateRowsWiseRecordCount(df: DataFrame, column: List[String]): DataFrame = {
 
     val colRegex = raw"^.+\((.*?)\)".r
     val mapDF = column.map(_ -> "count").toMap
@@ -115,8 +114,8 @@ class ReconAutomation {
    * @param primaryKey PrimaryKey of the source & Target it could be more than 1
    * @return  DataFrame
    */
-  def joinDFTo(joinType: String, columns: List[String], sourceDF: DataFrame, targetDF: DataFrame,
-               primaryKey: List[String]): DataFrame = {
+  def calculateJoinResultToGetRowWiseCount(joinType: String, columns: List[String], sourceDF: DataFrame, targetDF: DataFrame,
+                                           primaryKey: List[String]): DataFrame = {
 
     columns.map( i => sourceDF.join(targetDF, primaryKey:+i, joinType).agg(count(i).as(i))
       .na.fill(0)
@@ -131,7 +130,7 @@ class ReconAutomation {
    * @param pivotCol sourceDF
    * @return  DataFrame
    */
-  def TransposeDF(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
+  def transposeDataFrame(df: DataFrame, columns: Seq[String], pivotCol: String): DataFrame = {
 
     val columnsValue = columns.map(x => "'" + x + "', " + x)
     val stackCols = columnsValue.mkString(",")
@@ -141,9 +140,7 @@ class ReconAutomation {
       .agg(concat_ws("", collect_list(col("col1"))))
       .withColumnRenamed("col0", pivotCol)
     transposeDF
-
   }
-
 }
 
 object ReconAutomationObject {
@@ -195,21 +192,22 @@ object ReconAutomationObject {
     // Columns to select after ignoring Primary Key
     val columnToSelect = schemaSchemaList diff primaryKeyList
 
-    val sourceRecCount = new ReconAutomation().totalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
-    val targetRecCount = new ReconAutomation().totalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
+    val sourceRecCount = new ReconAutomation().calculateTotalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
+    val targetRecCount = new ReconAutomation().calculateTotalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
 
     // Overlap Record
     val overlapRecCount = new ReconAutomation()
-      .joinDF(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
+      .calculateJoinResult(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
 
     // Extra Records in Source
     val extraSourceRecCount = new ReconAutomation()
-      .joinDF(sourceDF, targetDF, schemaSchemaList, "left_anti", "Source_Extra_Rec_Count")
+      .calculateJoinResult(sourceDF, targetDF, schemaSchemaList, "left_anti", "Source_Extra_Rec_Count")
 
     // Extra Records in Target
     val extraTargetRecCount = new ReconAutomation()
-      .joinDF(targetDF, sourceDF, schemaSchemaList, "left_anti","Target_Extra_Rec_Count" )
+      .calculateJoinResult(targetDF, sourceDF, schemaSchemaList, "left_anti","Target_Extra_Rec_Count" )
 
+    println("Output:1")
     val joinResult = sourceRecCount
       .join(targetRecCount, Seq("Column_Name"),"inner")
       .join(overlapRecCount, Seq("Column_Name"),"inner")
@@ -217,49 +215,50 @@ object ReconAutomationObject {
       .join(extraTargetRecCount, Seq("Column_Name"),"inner").drop("Column_Name")
     joinResult.show()
 
-    val sourceRowCount = new ReconAutomation().rowsCount(sourceDF, columnToSelect)
+    val sourceRowCount = new ReconAutomation().calculateRowsWiseRecordCount(sourceDF, columnToSelect)
     // sourceRowCount.show()
 
-    val targetRowCount = new ReconAutomation().rowsCount(targetDF, columnToSelect)
+    val targetRowCount = new ReconAutomation().calculateRowsWiseRecordCount(targetDF, columnToSelect)
     // targetRowCount.show()
 
     // Overlap Records
     val overlapRowCount = new ReconAutomation()
-      .joinDFTo("inner", columnToSelect, sourceDF, targetDF, primaryKeyList)
+      .calculateJoinResultToGetRowWiseCount("inner", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // overlapRowCount.show()
 
     // Extra Records in Source
     val extraSourceRowCount = new ReconAutomation()
-      .joinDFTo("left_anti", columnToSelect, sourceDF, targetDF, primaryKeyList)
+      .calculateJoinResultToGetRowWiseCount("left_anti", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // extraSourceRowCount.show()
 
     // Extra Records in Target
     val extraTargetRowCount = new ReconAutomation()
-      .joinDFTo("left_anti",  columnToSelect, targetDF, sourceDF, primaryKeyList)
+      .calculateJoinResultToGetRowWiseCount("left_anti",  columnToSelect, targetDF, sourceDF, primaryKeyList)
     // extraTargetRowCount.show()
 
     // Transpose the result
     val sourceRowsCount = new ReconAutomation()
-      .TransposeDF(sourceRowCount, columnToSelect, "Column_Name")
+      .transposeDataFrame(sourceRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Source_Rec_Count")
 
     val targetRowsCount = new ReconAutomation()
-      .TransposeDF(targetRowCount, columnToSelect, "Column_Name")
+      .transposeDataFrame(targetRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Target_Rec_Count")
 
     val overlapRowsCount = new ReconAutomation()
-      .TransposeDF(overlapRowCount, columnToSelect, "Column_Name")
+      .transposeDataFrame(overlapRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Overlap_Rec_Count")
 
     val extraSourceRowsCount = new ReconAutomation()
-      .TransposeDF(extraSourceRowCount, columnToSelect, "Column_Name")
+      .transposeDataFrame(extraSourceRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Source_Extra_Rec_Count")
 
     val extraTargetRowsCount = new ReconAutomation()
-      .TransposeDF(extraTargetRowCount, columnToSelect, "Column_Name")
+      .transposeDataFrame(extraTargetRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Target_Extra_Rec_Count")
 
     // Final Result DF
+    println("Output:2")
     val finalDF = sourceRowsCount
       .join(targetRowsCount, Seq("Column_Name"),"inner")
       .join(overlapRowsCount, Seq("Column_Name"),"inner")
