@@ -23,4 +23,8 @@ libraryDependencies += "com.typesafe" % "config" % "1.4.1"
 // https://mvnrepository.com/artifact/mysql/mysql-connector-java
 libraryDependencies += "mysql" % "mysql-connector-java" % "8.0.27"
 
+// https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc
+libraryDependencies += "com.microsoft.sqlserver" % "mssql-jdbc" % "10.2.0.jre17"
+
+
 
