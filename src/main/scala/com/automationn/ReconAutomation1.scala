@@ -185,9 +185,7 @@ object ReconAutomationObject1 {
 
     /**
      * Now calling the method which is available in mysqlConnection class
-     * Now calling the method which is available in mysqlConnection class
      **/
-
     val sourceDF = new ReconAutomation1().readDataAndConvertToDataframe(readType,fileType,sourcePath,
       sourceDatabase, sourceTable, sourceUser, sourcePassword, sourceDriverName, sourceConnString)
     println("Source Data:")
