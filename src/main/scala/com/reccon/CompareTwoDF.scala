@@ -1,4 +1,4 @@
-package com.automationn
+package com.reccon
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}

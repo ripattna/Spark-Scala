@@ -1,4 +1,4 @@
-package com.automationn
+package com.reccon
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions.{col, collect_list, concat_ws, count, monotonically_increasing_id}
@@ -6,7 +6,7 @@ import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
 
-class ReconAutomation {
+class ReconAutomation1 {
 
   // Spark Session
   val spark = SparkSession.builder()
@@ -23,8 +23,9 @@ class ReconAutomation {
    * @param filePath where the file reside in any of the storage
    * @return  DataFrame
    */
-  def readDataAndConvertToDataframe(readType: String,fileType: String,filePath: String,connString: String,
-                                    driverName: String,database: String,table: String,user: String,password: String): DataFrame = {
+  def readDataAndConvertToDataframe(readType: String,fileType: String,filePath: String,
+                                    database: String,table: String,user: String,password: String,driverName: String,
+                                    connString: String): DataFrame = {
 
     if (readType == "file") {
       try {
@@ -143,12 +144,12 @@ class ReconAutomation {
   }
 }
 
-object ReconAutomationObject {
+object ReconAutomationObject1 {
 
   def main(args: Array[String]): Unit = {
 
     // Reading the conf file
-    val config: Config = ConfigFactory.load("config.conf")
+    val config: Config = ConfigFactory.load("configBck.conf")
 
     // Reading the file format from config
     val readType: String = config.getString("readType")
@@ -159,30 +160,39 @@ object ReconAutomationObject {
 
     val fileType: String = config.getString("fileDetails.fileType")
 
-    // Reading the database connection
-    val database : String = config.getString("databaseDetails.databaseName")
-    val table : String = config.getString("databaseDetails.tableName")
-    val user = config.getString("databaseDetails.userName")
-    val password =  config.getString("databaseDetails.password")
-    val driverName = config.getString("databaseDetails.driverName")
-    val connString = config.getString("databaseDetails.connString")
+    /**
+     * Reading the source database connection
+     **/
+    val sourceDatabase : String = config.getString("databaseDetails.sourceDatabaseName")
+    val sourceTable : String = config.getString("databaseDetails.sourceTableName")
+    val sourceUser = config.getString("databaseDetails.sourceUserName")
+    val sourcePassword =  config.getString("databaseDetails.sourcePassword")
+    val sourceDriverName = config.getString("databaseDetails.sourceDriverName")
+    val sourceConnString = config.getString("databaseDetails.sourceConnString")
+
+    /**
+     * Reading the target database connection
+     **/
+    val targetDatabase : String = config.getString("databaseDetails.targetDatabaseName")
+    val targetTable : String = config.getString("databaseDetails.targetTableName")
+    val targetUser = config.getString("databaseDetails.targetUserName")
+    val targetPassword =  config.getString("databaseDetails.targetPassword")
+    val targetDriverName = config.getString("databaseDetails.targetDriverName")
+    val targetConnString = config.getString("databaseDetails.targetConnString")
 
     // Reading the PrimaryKey from config
     val primaryKeyList = config.getStringList("primaryKey.primaryKeyValue").toList
 
     /**
      * Now calling the method which is available in mysqlConnection class
-     * Now calling the method which is available in mysqlConnection class
-     * Now calling the method which is available in mysqlConnection class
      **/
-
-    val sourceDF = new ReconAutomation().readDataAndConvertToDataframe(readType, fileType, sourcePath, connString,
-      driverName, database, table, user, password)
+    val sourceDF = new ReconAutomation1().readDataAndConvertToDataframe(readType,fileType,sourcePath,
+      sourceDatabase, sourceTable, sourceUser, sourcePassword, sourceDriverName, sourceConnString)
     println("Source Data:")
     sourceDF.show()
 
-    val targetDF = new ReconAutomation().readDataAndConvertToDataframe(readType, fileType, targetPath, connString,
-      driverName, database, table, user, password)
+    val targetDF = new ReconAutomation1().readDataAndConvertToDataframe(readType,fileType,targetPath,
+      targetDatabase, targetTable, targetUser, targetPassword, targetDriverName, targetConnString)
     println("Target Data:")
     targetDF.show()
 
@@ -192,19 +202,19 @@ object ReconAutomationObject {
     // Columns to select after ignoring Primary Key
     val columnToSelect = schemaSchemaList diff primaryKeyList
 
-    val sourceRecCount = new ReconAutomation().calculateTotalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
-    val targetRecCount = new ReconAutomation().calculateTotalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
+    val sourceRecCount = new ReconAutomation1().calculateTotalRecordCount(sourceDF,targetDF, "Source_Rec_Count")
+    val targetRecCount = new ReconAutomation1().calculateTotalRecordCount(targetDF,sourceDF, "Target_Rec_Count")
 
     // Overlap Record
-    val overlapRecCount = new ReconAutomation()
+    val overlapRecCount = new ReconAutomation1()
       .calculateJoinResult(sourceDF, targetDF, schemaSchemaList, "inner", "Overlap_Rec_Count")
 
     // Extra Records in Source
-    val extraSourceRecCount = new ReconAutomation()
+    val extraSourceRecCount = new ReconAutomation1()
       .calculateJoinResult(sourceDF, targetDF, schemaSchemaList, "left_anti", "Source_Extra_Rec_Count")
 
     // Extra Records in Target
-    val extraTargetRecCount = new ReconAutomation()
+    val extraTargetRecCount = new ReconAutomation1()
       .calculateJoinResult(targetDF, sourceDF, schemaSchemaList, "left_anti","Target_Extra_Rec_Count" )
 
     println("Output:1")
@@ -215,45 +225,45 @@ object ReconAutomationObject {
       .join(extraTargetRecCount, Seq("Column_Name"),"inner").drop("Column_Name")
     joinResult.show()
 
-    val sourceRowCount = new ReconAutomation().calculateRowsWiseRecordCount(sourceDF, columnToSelect)
+    val sourceRowCount = new ReconAutomation1().calculateRowsWiseRecordCount(sourceDF, columnToSelect)
     // sourceRowCount.show()
 
-    val targetRowCount = new ReconAutomation().calculateRowsWiseRecordCount(targetDF, columnToSelect)
+    val targetRowCount = new ReconAutomation1().calculateRowsWiseRecordCount(targetDF, columnToSelect)
     // targetRowCount.show()
 
     // Overlap Records
-    val overlapRowCount = new ReconAutomation()
+    val overlapRowCount = new ReconAutomation1()
       .calculateJoinResultToGetRowWiseCount("inner", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // overlapRowCount.show()
 
     // Extra Records in Source
-    val extraSourceRowCount = new ReconAutomation()
+    val extraSourceRowCount = new ReconAutomation1()
       .calculateJoinResultToGetRowWiseCount("left_anti", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // extraSourceRowCount.show()
 
     // Extra Records in Target
-    val extraTargetRowCount = new ReconAutomation()
+    val extraTargetRowCount = new ReconAutomation1()
       .calculateJoinResultToGetRowWiseCount("left_anti",  columnToSelect, targetDF, sourceDF, primaryKeyList)
     // extraTargetRowCount.show()
 
     // Transpose the result
-    val sourceRowsCount = new ReconAutomation()
+    val sourceRowsCount = new ReconAutomation1()
       .transposeDataFrame(sourceRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Source_Rec_Count")
 
-    val targetRowsCount = new ReconAutomation()
+    val targetRowsCount = new ReconAutomation1()
       .transposeDataFrame(targetRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Target_Rec_Count")
 
-    val overlapRowsCount = new ReconAutomation()
+    val overlapRowsCount = new ReconAutomation1()
       .transposeDataFrame(overlapRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Overlap_Rec_Count")
 
-    val extraSourceRowsCount = new ReconAutomation()
+    val extraSourceRowsCount = new ReconAutomation1()
       .transposeDataFrame(extraSourceRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Source_Extra_Rec_Count")
 
-    val extraTargetRowsCount = new ReconAutomation()
+    val extraTargetRowsCount = new ReconAutomation1()
       .transposeDataFrame(extraTargetRowCount, columnToSelect, "Column_Name")
       .withColumnRenamed("0","Target_Extra_Rec_Count")
 
@@ -272,6 +282,5 @@ object ReconAutomationObject {
       .option("header", true)
       .mode("overwrite")
       .save("/tmp/reconOutput")
-
   }
 }
