@@ -1,4 +1,6 @@
+### Intellij ###
 .idea
+out/
 .bsp
 project/
 target/
