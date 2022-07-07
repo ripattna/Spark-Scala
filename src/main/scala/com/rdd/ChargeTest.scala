@@ -12,7 +12,7 @@ object ChargeTest {
     // val sc = new SparkContext(conf)
 
     // Setting the log level to Error
-     sc.setLogLevel("ERROR")
+    sc.setLogLevel("ERROR")
 
     // Reading the text file
     val customerDetails = sc.textFile("src/main/resources/Employee.txt")

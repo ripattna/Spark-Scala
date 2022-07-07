@@ -2,7 +2,7 @@ package com.rdd
 
 import org.apache.spark.{SparkConf, SparkContext}
 
-object  RDDTransformation {
+object RDDTransformation {
 
   def main(args: Array[String]): Unit = {
 
@@ -20,7 +20,7 @@ object  RDDTransformation {
     println("The lines where Spark present in the test:")
     linesWithSpark.collect().foreach(println)
     println("Number of times Spark present in the test:", linesWithSpark.count())
-    //val newRDD = readRDD.map(line => line.split(" ").size).reduce((a, b) => if (a > b) a else b)
+    // val newRDD = readRDD.map(line => line.split(" ").size).reduce((a, b) => if (a > b) a else b)
     sc.stop()
   }
 }

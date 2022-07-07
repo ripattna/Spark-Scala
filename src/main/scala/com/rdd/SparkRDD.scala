@@ -5,7 +5,8 @@ import org.apache.spark.sql.SparkSession
 object SparkRDD extends App {
 
   // Creating SparkSession
-  val spark: SparkSession = SparkSession.builder()
+  val spark: SparkSession = SparkSession
+    .builder()
     .master("local[1]")
     .appName("Spark-Scala")
     .getOrCreate()

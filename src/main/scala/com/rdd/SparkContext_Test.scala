@@ -20,5 +20,4 @@ object SparkContext_Test {
     println("Number of element in RDD:", rdd1.count())
 
   }
-
 }

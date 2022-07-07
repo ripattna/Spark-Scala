@@ -9,14 +9,14 @@ object Broadcast_Variable {
     // Creating SparkSession
     val spark = SparkSession.builder().appName("BroadCast_Variable").master("local").getOrCreate()
 
-    val ep = Seq(("Harry",1),("Soma",1),("Sandy"),3,("Andy",2),("Ted",3))
+    val ep = Seq(("Harry", 1), ("Soma", 1), ("Sandy"), 3, ("Andy", 2), ("Ted", 3))
 
     val emp = spark.sparkContext.parallelize(ep)
 
     emp.collect().foreach(println)
 
     // Creating a HashMap
-    val dp =Map(1-> "a", 2-> "b", 3->"c")
+    val dp = Map(1 -> "a", 2 -> "b", 3 -> "c")
 
     val dep = spark.sparkContext.broadcast(dp)
 

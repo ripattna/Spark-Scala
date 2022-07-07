@@ -7,10 +7,11 @@ object OlympicDataAnalysisUseCaseParameter {
 
   def main(args: Array[String]): Unit = {
 
-    if(args.length==3) {
+    if (args.length == 3) {
 
       // Creating SparkSession
-      val spark = SparkSession.builder()
+      val spark = SparkSession
+        .builder()
         .master(args(0))
         .appName("OlympicData")
         .getOrCreate()
@@ -19,19 +20,21 @@ object OlympicDataAnalysisUseCaseParameter {
       spark.sparkContext.setLogLevel("WARN")
 
       val textFile = spark.sparkContext.textFile(args(1))
-      val counts =  textFile.filter{
-        x => {
-          if(x.toString().split("\t").length >=10)
-            true
-          else
-            false
+      val counts = textFile
+        .filter { x =>
+          {
+            if (x.toString().split("\t").length >= 10)
+              true
+            else
+              false
+          }
         }
-      }.map(line=>{line.toString().split("\t")})
+        .map(line => { line.toString().split("\t") })
       //counts.take(10).foreach(println)
 
       val fil = counts.filter(
         x => {
-          if(x(5).equalsIgnoreCase("swimming")&&(x(9).matches(("\\d+"))))
+          if (x(5).equalsIgnoreCase("swimming") && (x(9).matches(("\\d+"))))
             true
           else
             false
@@ -39,13 +42,10 @@ object OlympicDataAnalysisUseCaseParameter {
       )
       //println(fil.count())
 
-      val pairs: RDD[(String,Int)] = fil.map(x => (x(2),x(9).toInt))
-      val cnt = pairs.reduceByKey(_+_).saveAsTextFile(args(2))
+      val pairs: RDD[(String, Int)] = fil.map(x => (x(2), x(9).toInt))
+      val cnt = pairs.reduceByKey(_ + _).saveAsTextFile(args(2))
       //cnt.take(20).foreach(println)
-
-    }
-    else
-    {
+    } else {
       println("Enter the three arguments")
     }
 

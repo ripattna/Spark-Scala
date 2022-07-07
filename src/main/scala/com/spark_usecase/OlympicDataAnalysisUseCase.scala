@@ -12,27 +12,29 @@ object OlympicDataAnalysisUseCase {
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
 
-    val textFile = spark.sparkContext.textFile("C:\\Project\\Files\\Input\\olympic")
-    val counts =  textFile.filter{
+    val textFile = spark.sparkContext.textFile("src/resources/olympics_data.csv")
+    val counts = textFile
+      .filter { x =>
+        {
+          if (x.toString().split("\t").length >= 10)
+            true
+          else
+            false
+        }
+      }
+      .map(line => { line.toString().split("\t") })
+    counts.take(10).foreach(println)
+    val fil = counts.filter(
       x => {
-        if(x.toString().split("\t").length >=10)
+        if (x(5).equalsIgnoreCase("swimming") && (x(9).matches(("\\d+"))))
           true
         else
           false
       }
-    }.map(line=>{line.toString().split("\t")})
-   counts.take(10).foreach(println)
-    val fil = counts.filter(
-      x => {
-        if(x(5).equalsIgnoreCase("swimming")&&(x(9).matches(("\\d+"))))
-        true
-      else
-        false
-      }
     )
     println(fil.count())
-    val pairs: RDD[(String,Int)] = fil.map(x => (x(2),x(9).toInt))
-    val cnt = pairs.reduceByKey(_+_)
+    val pairs: RDD[(String, Int)] = fil.map(x => (x(2), x(9).toInt))
+    val cnt = pairs.reduceByKey(_ + _)
     cnt.take(20).foreach(println)
 
   }

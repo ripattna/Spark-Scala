@@ -3,7 +3,7 @@ package com.validation
 import com.typesafe.config.{Config, ConfigFactory}
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 
-object ReconObject{
+object ReconObject {
 
   def main(args: Array[String]): Unit = {
 
@@ -41,35 +41,42 @@ object ReconObject{
     // Overlap Records
     val overlapRowCount = new ReconValidation().joinDF("inner", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // overlapRowCount.show()
+
     // Extra Records in Source
-    val extraSourceRowCount = new ReconValidation().joinDF("left_anti", columnToSelect, sourceDF, targetDF, primaryKeyList)
+    val extraSourceRowCount =
+      new ReconValidation().joinDF("left_anti", columnToSelect, sourceDF, targetDF, primaryKeyList)
     // extraSourceRowCount.show()
-    val extraTargetRowCount = new ReconValidation().joinDF("left_anti",  columnToSelect, targetDF, sourceDF, primaryKeyList)
+    val extraTargetRowCount =
+      new ReconValidation().joinDF("left_anti", columnToSelect, targetDF, sourceDF, primaryKeyList)
     // extraTargetRowCount.show()
 
     // Transpose the result
-    val sourceRowsCount = new ReconValidation().TransposeDF(sourceRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","No_Of_Rec_Source")
-    val targetRowsCount = new ReconValidation().TransposeDF(targetRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","No_Of_Rec_Target")
-    val overlapRowsCount = new ReconValidation().TransposeDF(overlapRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Overlap_Count")
-    val extraSourceRowsCount = new ReconValidation().TransposeDF(extraSourceRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Extra_Rec_Source")
-    val extraTargetRowsCount = new ReconValidation().TransposeDF(extraTargetRowCount, columnToSelect, "Column_Name")
-      .withColumnRenamed("0","Extra_Rec_Target")
+    val sourceRowsCount = new ReconValidation()
+      .TransposeDF(sourceRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0", "No_Of_Rec_Source")
+    val targetRowsCount = new ReconValidation()
+      .TransposeDF(targetRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0", "No_Of_Rec_Target")
+    val overlapRowsCount = new ReconValidation()
+      .TransposeDF(overlapRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0", "Overlap_Count")
+    val extraSourceRowsCount = new ReconValidation()
+      .TransposeDF(extraSourceRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0", "Extra_Rec_Source")
+    val extraTargetRowsCount = new ReconValidation()
+      .TransposeDF(extraTargetRowCount, columnToSelect, "Column_Name")
+      .withColumnRenamed("0", "Extra_Rec_Target")
 
     // Final Result DF
     val finalDF = sourceRowsCount
-      .join(targetRowsCount, Seq("Column_Name"),"inner")
-      .join(overlapRowsCount, Seq("Column_Name"),"inner")
-      .join(extraSourceRowsCount, Seq("Column_Name"),"inner")
-      .join(extraTargetRowsCount, Seq("Column_Name"),"inner")
+      .join(targetRowsCount, Seq("Column_Name"), "inner")
+      .join(overlapRowsCount, Seq("Column_Name"), "inner")
+      .join(extraSourceRowsCount, Seq("Column_Name"), "inner")
+      .join(extraTargetRowsCount, Seq("Column_Name"), "inner")
     finalDF.show()
 
     // Write DataFrame data to CSV file
     // finalDF.write.format("csv").option("header", true).mode("overwrite").save("/tmp/reconRes")
-
 
   }
 

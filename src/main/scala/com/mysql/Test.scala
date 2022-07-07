@@ -6,7 +6,8 @@ object Test {
 
   def main(args: Array[String]): Unit = {
 
-    val spark = SparkSession.builder()
+    val spark = SparkSession
+      .builder()
       .appName("mysqlConnection")
       .master("local")
       .getOrCreate()
@@ -20,6 +21,7 @@ object Test {
       .option("user", "root")
       .option("password", "root")
       .load()
+
     dataframe_mysql.show()
 
   }

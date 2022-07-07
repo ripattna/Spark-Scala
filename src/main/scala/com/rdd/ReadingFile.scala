@@ -14,7 +14,7 @@ object ReadingFile {
     sc.setLogLevel("ERROR")
 
     // Reading the File
-    val readRDD  = sc.textFile("src/main/resources/Input.txt")
+    val readRDD = sc.textFile("src/main/resources/Input.txt")
 
     // Printing thr top 10 lines
     readRDD.take(num = 10).foreach(println)

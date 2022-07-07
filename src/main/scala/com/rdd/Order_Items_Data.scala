@@ -15,9 +15,10 @@ object Order_Items_Data {
 
     val orderItems = sc.textFile("src/main/resources/order_items/part-00000")
 
-    val revenuePerOrder = orderItems.
-      map(oi => (oi.split(",")(1).toInt, oi.split(",")(4).toFloat)).
-      reduceByKey(_ + _).map(oi => oi._1 + "," + oi._2)
+    val revenuePerOrder = orderItems
+      .map(oi => (oi.split(",")(1).toInt, oi.split(",")(4).toFloat))
+      .reduceByKey(_ + _)
+      .map(oi => oi._1 + "," + oi._2)
 
     //revenuePerOrder.saveAsTextFile(args(2))
 

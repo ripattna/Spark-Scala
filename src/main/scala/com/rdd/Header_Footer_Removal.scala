@@ -11,10 +11,10 @@ object Header_Footer_Removal {
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
 
-    val rddFromFile  = spark.sparkContext.textFile("src/main/resources/HeaderFooter_Removal.txt")
+    val rddFromFile = spark.sparkContext.textFile("src/main/resources/HeaderFooter_Removal.txt")
 
     println("#Get data Using collect:")
-    rddFromFile.collect().foreach(f => {println(f)})
+    rddFromFile.collect().foreach(f => { println(f) })
 
     // Header record
     val header = rddFromFile.first()
@@ -22,18 +22,18 @@ object Header_Footer_Removal {
     // Filtering the header
     val withoutHeader = rddFromFile.filter(x => !x.contains(header))
     println("Data without header:")
-    withoutHeader.collect().foreach(f => {println(f)})
+    withoutHeader.collect().foreach(f => { println(f) })
 
     val dataWithIndex = withoutHeader.zipWithIndex
     println("Print the data with the Index:")
     dataWithIndex.foreach(println)
 
     // Count of the records
-    val count =  withoutHeader.count()
+    val count = withoutHeader.count()
     println(count)
 
     // Filtering the footer records
-    val cleansedData = dataWithIndex.filter(x => x._2 < count -1)
+    val cleansedData = dataWithIndex.filter(x => x._2 < count - 1)
     println("Data without header & footer:")
     cleansedData.foreach(println)
 

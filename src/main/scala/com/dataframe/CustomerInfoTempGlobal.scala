@@ -15,7 +15,7 @@ object CustomerInfoTempGlobal {
       .option("header", "false")
       .option("inferSchema", "true")
       .schema("Name String,Address String,City String,Country String,PinCode Int")
-      .csv("C:\\Project\\Files\\Input\\text\\PipeDelimited.txt")
+      .csv("src/main/resources/PipeDelimited.txt")
     customerInfo.collect().foreach(println)
     customerInfo.printSchema()
 

@@ -14,9 +14,9 @@ object GetRevenuePerOrder_Test {
     // Reading the text file
     val orderItems = sc.textFile(args(1))
 
-    //val revenuePerOrder1 = orderItems.map(x => (x.split(",")(1).toInt,x.split(",")(4).toFloat)).reduceByKey(_ + _).map(x => x._1 + "," + x._2)
-    val revenuePerOrder =  orderItems.map(x => x.replace(",", "|"))
-    //revenuePerOrder.take(20).foreach(println)
+    // val revenuePerOrder1 = orderItems.map(x => (x.split(",")(1).toInt,x.split(",")(4).toFloat)).reduceByKey(_ + _).map(x => x._1 + "," + x._2)
+    val revenuePerOrder = orderItems.map(x => x.replace(",", "|"))
+    // revenuePerOrder.take(20).foreach(println)
 
     // Saving the outputs to disk
     revenuePerOrder.saveAsTextFile(args(2))

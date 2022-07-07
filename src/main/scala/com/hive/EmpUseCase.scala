@@ -21,11 +21,11 @@ object EmpUseCase {
     // Setting the current database to Demo Database
     spark.catalog.setCurrentDatabase("demo")
 
-
     // Creating the emp table
-    spark.sql("CREATE TABLE IF NOT EXISTS emp(id INT, name STRING, location STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'")
+    spark.sql(
+      "CREATE TABLE IF NOT EXISTS emp(Id INT, Name STRING,Gender STRING,Salary STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'")
 
-    spark.sql("LOAD DATA LOCAL INPATH '/C:/Project/Files/Input/emp.txt' INTO TABLE demo.emp")
+    spark.sql("LOAD DATA LOCAL INPATH 'src/main/resources/Employee.txt' INTO TABLE demo.emp")
     spark.sql("select * from demo.emp").show()
 
   }

@@ -13,12 +13,18 @@ object mysqlConnect {
     val database = "demo"
     val table = "employee"
     val user = "rissan"
-    val password  = "rissan"
-    val connString = "jdbc:mysql://localhost:3306/"+database
+    val password = "rissan"
+    val connString = "jdbc:mysql://localhost:3306/" + database
 
     // Connecting to mysql using JDBC connection
-    val jdbcDF = spark.read.format("jdbc").option("url", connString).option("driver", "com.mysql.cj.jdbc.Driver")
-      .option("dbtable", table).option("user", user).option("password", password).load()
+    val jdbcDF = spark.read
+      .format("jdbc")
+      .option("url", connString)
+      .option("driver", "com.mysql.cj.jdbc.Driver")
+      .option("dbtable", table)
+      .option("user", user)
+      .option("password", password)
+      .load()
     jdbcDF.show(5)
 
     // Writing the Dataframe to HIVE table

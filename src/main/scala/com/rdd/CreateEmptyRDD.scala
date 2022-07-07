@@ -19,7 +19,7 @@ object CreateEmptyRDD extends App {
   val rddString = spark.sparkContext.emptyRDD[String] // creates EmptyRDD[1]
   println(rddString)
   println("Num of Partitions: " + rddString.getNumPartitions) // returns o partition
-  //rddString.saveAsTextFile("test.txt")
+  // rddString.saveAsTextFile("test.txt")
 
   // Creating Empty RDD with partition
   val rdd2 = spark.sparkContext.parallelize(Seq.empty[String])

@@ -15,8 +15,9 @@ object ReadParquetFile {
 
     val df = spark.read.parquet("src/main/resources/file1.parquet")
     df.cache()
-    //df.show(false)
+    // df.show(false)
     df.withColumn("file_name", input_file_name()).select("file_name").distinct().show()
+
   }
 
 }
