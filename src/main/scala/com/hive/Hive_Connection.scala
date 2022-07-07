@@ -12,7 +12,7 @@ object Hive_Connection {
     spark.sparkContext.setLogLevel("WARN")
 
     spark.sql("create database if not exists temp_db")
-    //spark.sql("create database if not exists demo")
+    // spark.sql("create database if not exists demo")
     spark.sql("show databases").show()
     //spark.sql("use temp_db")
     //spark.sql("create table emp(id Int, salary Double) row format delimited fields terminated by ',")

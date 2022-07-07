@@ -11,10 +11,11 @@ object CsvOperation {
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
 
-    //val path = "src/main/resources/western.csv"
-    //val df3 = spark.read.option("header", "true").csv(path)
+    // val path = "src/main/resources/western.csv"
+    // val df3 = spark.read.option("header", "true").csv(path)
 
-    val df = spark.read.format("csv")
+    val df = spark.read
+      .format("csv")
       .option("sep", ",")
       .option("inferSchema", "true")
       .option("header", true)
