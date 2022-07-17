@@ -7,13 +7,13 @@ lazy val root = (project in file("."))
     name := "Spark-Scala-Sbt")
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-core
-libraryDependencies += "org.apache.spark" %% "spark-core" % "3.1.2"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "3.3.0"
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-sql
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.1.2"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.3.0"
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-hive
-libraryDependencies += "org.apache.spark" %% "spark-hive" % "3.1.2" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-hive" % "3.3.0" % "provided"
 
 libraryDependencies += "uk.co.gresearch.spark" %% "spark-extension" % "2.0.0-3.2"
 
