@@ -9,7 +9,6 @@ object CreateDataFrame {
 
     // Create SparkSession
     val spark = SparkSession.builder().appName("RDDTransformation").master("local").getOrCreate()
-    //val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExample").getOrCreate()
 
     // Creating log level
     spark.sparkContext.setLogLevel("ERROR")

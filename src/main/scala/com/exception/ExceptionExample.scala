@@ -16,7 +16,7 @@ class ExceptionExample {
 }
 object MainObject {
   def main(args: Array[String]) {
-    var e = new ExceptionExample()
+    val e = new ExceptionExample()
     e.divide(100, 10)
 
   }

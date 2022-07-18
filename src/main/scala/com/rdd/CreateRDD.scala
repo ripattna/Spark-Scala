@@ -13,16 +13,16 @@ object CreateRDD {
 
     val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExamples.com").getOrCreate()
 
-    //Creating log level
+    // Creating log level
     spark.sparkContext.setLogLevel("WARN")
 
-    //RDD can be created in 5 ways below are the example:
+    // RDD can be created in 5 ways below are the example:
 
     //# 1.Creating a RDD by parallelize a collection
     val firstRDD = sc.parallelize(List("Spark", "Hadoop", "Kafka"))
     firstRDD.collect().foreach(println)
 
-    //firstRDD.take(10).foreach(println)
+    // firstRDD.take(10).foreach(println)
     println("The number word in the RDD is: " + firstRDD.count())
 
     //# 2.Creating a RDD referencing a data set from a external storage system
