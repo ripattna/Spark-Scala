@@ -104,6 +104,7 @@ object SampleValidation_1 {
         .withColumn("Column_Name", monotonically_increasing_id()).drop("index")
 
       extraTargetResultSet
+
     }
 
     val extraTargetRowCount = extraRecordTarget("left_anti")
