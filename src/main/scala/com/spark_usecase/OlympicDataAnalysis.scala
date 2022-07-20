@@ -18,9 +18,8 @@ object OlympicDataAnalysis {
       .option("delimiter", ",")
       .option("inferSchema", "true")
       .option("timestampFormat", "yyyy/MM/dd HH:mm:ss")
-      .schema(
-        "Name string ,Age integer ,Country string ,Year string ,Closing_Date string ,Sport string ,Gold_Medals integer ,Silver_Medals integer ,Bronze_Medals integer ,Total_Medals integer")
-      .csv("src/resources/olympics_data.csv")
+      .schema("Name string,Age integer,Country string,Year string,Closing_Date string,Sport string,Gold_Medals integer,Silver_Medals integer ,Bronze_Medals integer ,Total_Medals integer")
+      .csv("src/main/resources/olympics_data.csv")
 
     df.createGlobalTempView("olympic")
     val sqlDF = spark.sql("select * from global_temp.olympic limit 5").show()

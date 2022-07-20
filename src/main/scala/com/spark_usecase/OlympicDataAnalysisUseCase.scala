@@ -11,8 +11,8 @@ object OlympicDataAnalysisUseCase {
     val spark = SparkSession.builder().appName("OlympicData").master("local").getOrCreate()
     // Creating log level
     spark.sparkContext.setLogLevel("WARN")
-
-    val textFile = spark.sparkContext.textFile("src/resources/olympics_data.csv")
+    // Reading the Olympics datasets
+    val textFile = spark.sparkContext.textFile("src/main/resources/olympics_data.csv")
     val counts = textFile
       .filter { x =>
         {
@@ -27,7 +27,7 @@ object OlympicDataAnalysisUseCase {
 
     val fil = counts.filter(
       x => {
-        if (x(5).equalsIgnoreCase("swimming") && (x(9).matches(("\\d+"))))
+        if (x(5).equalsIgnoreCase("swimming") && x(9).matches("\\d+"))
           true
         else
           false
